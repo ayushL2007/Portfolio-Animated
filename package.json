@@ -1,0 +1,22 @@
+{
+  "name": "portfolio_animated",
+  "version": "1.0.0",
+  "description": "2-d Pixel pokemon game based portfolio.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ayushL2007/Portfolio-Animated.git"
+  },
+  "keywords": [
+    "portfolio"
+  ],
+  "author": "Ayush Lahiri",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/ayushL2007/Portfolio-Animated/issues"
+  },
+  "homepage": "https://github.com/ayushL2007/Portfolio-Animated#readme"
+}
