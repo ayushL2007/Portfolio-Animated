@@ -109,7 +109,9 @@ function SnakeGame() {
   const [score, setScore] = useState(0);
   const [started, setStarted] = useState(false);
   const dirRef = useRef<Dir>("right");
-  const intervalRef = useRef<ReturnType<typeof setInterval>>();
+  
+  // FIXED: Explicitly typed for the browser environment to satisfy the build compiler
+  const intervalRef = useRef<any>(null);
 
   const spawnFood = useCallback((currentSnake: Pos[]): Pos => {
     let pos: Pos;
@@ -168,12 +170,10 @@ function SnakeGame() {
         if (d === "left") head.x--;
         if (d === "right") head.x++;
 
-        // Wall collision
         if (head.x < 0 || head.x >= GRID || head.y < 0 || head.y >= GRID) {
           setGameOver(true);
           return prev;
         }
-        // Self collision
         if (prev.some((s) => s.x === head.x && s.y === head.y)) {
           setGameOver(true);
           return prev;
@@ -190,7 +190,9 @@ function SnakeGame() {
       });
     }, 150);
 
-    return () => clearInterval(intervalRef.current);
+    return () => {
+        if(intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [started, gameOver, food, spawnFood]);
 
   return (
@@ -204,12 +206,10 @@ function SnakeGame() {
         className="border-2 border-border bg-[#1a2a1a] relative"
         style={{ width: GRID * CELL, height: GRID * CELL, imageRendering: "pixelated" }}
       >
-        {/* Food */}
         <div
           className="absolute bg-[#e83b3b]"
           style={{ left: food.x * CELL, top: food.y * CELL, width: CELL - 1, height: CELL - 1 }}
         />
-        {/* Snake */}
         {snake.map((s, i) => (
           <div
             key={i}
@@ -315,7 +315,6 @@ function MemoryGame() {
         const c2 = cards.find((c) => c.id === cardId)!;
 
         if (c1.skill.name === c2.skill.name) {
-          // Match
           setTimeout(() => {
             setCards((prev) => {
               const updated = prev.map((c) =>
@@ -327,7 +326,6 @@ function MemoryGame() {
             setFlippedIds([]);
           }, 400);
         } else {
-          // No match - flip back
           setTimeout(() => {
             setCards((prev) =>
               prev.map((c) =>
@@ -366,7 +364,6 @@ function MemoryGame() {
                 : card.flipped
                 ? card.skill.color + "20"
                 : "var(--muted)",
-              transform: card.flipped || card.matched ? "rotateY(0)" : "rotateY(0)",
             }}
           >
             {card.flipped || card.matched ? (
