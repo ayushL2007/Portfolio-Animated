@@ -114,7 +114,7 @@ export function drawPath(
   ctx.fillRect(px, py, 1, TILE);
 }
 
-// Draw a pixel-art building
+// Draw a pixel-art building with detailed visuals
 export function drawBuilding(
   ctx: CanvasRenderingContext2D,
   building: Building,
@@ -127,71 +127,250 @@ export function drawBuilding(
   const bw = building.width * TILE;
   const bh = building.height * TILE;
 
-  ctx.fillStyle = "rgba(0,0,0,0.2)";
-  ctx.fillRect(bx + 8, by + 8, bw, bh);
+  // === SHADOW (soft, offset) ===
+  ctx.fillStyle = "rgba(0,0,0,0.25)";
+  ctx.fillRect(bx + 6, by + 6, bw, bh);
 
+  // === MAIN WALL ===
   ctx.fillStyle = building.color;
   ctx.fillRect(bx, by, bw, bh);
 
-  ctx.strokeStyle = "rgba(0,0,0,0.4)";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(bx + 1, by + 1, bw - 2, bh - 2);
+  // Wall highlight (left and top edge lighter)
+  ctx.fillStyle = shadeColor(building.color, 18);
+  ctx.fillRect(bx, by, bw, 3);
+  ctx.fillRect(bx, by, 3, bh);
 
-  const roofHeight = TILE * 1.5;
-  ctx.fillStyle = building.roofColor;
-  ctx.fillRect(bx - 6, by - roofHeight, bw + 12, roofHeight);
-  ctx.fillStyle = shadeColor(building.roofColor, -20);
-  ctx.fillRect(bx - 6, by - roofHeight, bw + 12, 5);
-  ctx.fillRect(bx - 6, by - 5, bw + 12, 5);
+  // Wall shadow (right and bottom edge darker)
+  ctx.fillStyle = shadeColor(building.color, -18);
+  ctx.fillRect(bx + bw - 3, by, 3, bh);
+  ctx.fillRect(bx, by + bh - 3, bw, 3);
 
-  ctx.fillStyle = isNearby ? "#ffffaa" : "#87ceeb";
-  const windowSize = 14;
-  const windowY = by + TILE * 0.8;
-  ctx.fillRect(bx + TILE * 0.6, windowY, windowSize, windowSize);
-  ctx.fillRect(bx + bw - TILE * 0.6 - windowSize, windowY, windowSize, windowSize);
-  if (building.width >= 6) {
-    ctx.fillRect(bx + bw / 2 - windowSize / 2, windowY, windowSize, windowSize);
+  // Brick / panel texture lines
+  ctx.fillStyle = shadeColor(building.color, -10);
+  for (let row = 0; row < bh; row += 12) {
+    ctx.fillRect(bx + 3, by + row, bw - 6, 1);
+    const offset = (row / 12) % 2 === 0 ? 0 : 18;
+    for (let col = offset; col < bw - 6; col += 36) {
+      ctx.fillRect(bx + 3 + col, by + row, 1, 12);
+    }
   }
-  ctx.fillStyle = "rgba(0,0,0,0.3)";
-  ctx.fillRect(bx + TILE * 0.6 + windowSize / 2 - 1, windowY, 2, windowSize);
-  ctx.fillRect(bx + TILE * 0.6, windowY + windowSize / 2 - 1, windowSize, 2);
-  ctx.fillRect(bx + bw - TILE * 0.6 - windowSize + windowSize / 2 - 1, windowY, 2, windowSize);
-  ctx.fillRect(bx + bw - TILE * 0.6 - windowSize, windowY + windowSize / 2 - 1, windowSize, 2);
 
-  const doorW = TILE * 0.8;
-  const doorH = TILE * 1.2;
+  // === FOUNDATION / BASE ===
+  ctx.fillStyle = shadeColor(building.color, -30);
+  ctx.fillRect(bx - 2, by + bh - 8, bw + 4, 8);
+  ctx.fillStyle = shadeColor(building.color, -40);
+  ctx.fillRect(bx - 2, by + bh - 8, bw + 4, 2);
+
+  // === PEAKED ROOF ===
+  const roofOverhang = 10;
+  const roofPeakH = TILE * 1.2;
+  const roofBaseY = by;
+  const roofPeakY = by - roofPeakH;
+  const roofLeft = bx - roofOverhang;
+  const roofRight = bx + bw + roofOverhang;
+  const roofMidX = bx + bw / 2;
+
+  // Roof body (triangular via rows of rectangles for pixel art look)
+  ctx.fillStyle = building.roofColor;
+  const roofRows = Math.floor(roofPeakH / 3);
+  for (let i = 0; i < roofRows; i++) {
+    const t = i / roofRows;
+    const rowY = roofBaseY - (i + 1) * 3;
+    const rowLeft = roofLeft + (roofMidX - roofLeft) * t;
+    const rowRight = roofRight - (roofRight - roofMidX) * t;
+    ctx.fillRect(rowLeft, rowY, rowRight - rowLeft, 3);
+  }
+
+  // Roof shading - darker bottom edge
+  ctx.fillStyle = shadeColor(building.roofColor, -25);
+  ctx.fillRect(roofLeft, roofBaseY - 4, roofRight - roofLeft, 4);
+
+  // Roof highlight stripe
+  ctx.fillStyle = shadeColor(building.roofColor, 15);
+  for (let i = Math.floor(roofRows * 0.3); i < Math.floor(roofRows * 0.5); i++) {
+    const t = i / roofRows;
+    const rowY = roofBaseY - (i + 1) * 3;
+    const rowLeft2 = roofLeft + (roofMidX - roofLeft) * t;
+    const rowRight2 = roofRight - (roofRight - roofMidX) * t;
+    ctx.fillRect(rowLeft2 + 2, rowY, (rowRight2 - rowLeft2) * 0.3, 2);
+  }
+
+  // Roof ridge line at peak
+  ctx.fillStyle = shadeColor(building.roofColor, -35);
+  ctx.fillRect(roofMidX - 3, roofPeakY, 6, 4);
+
+  // === CHIMNEY ===
+  const chimneyX = bx + bw * 0.75;
+  const chimneyW = 14;
+  const chimneyH = roofPeakH * 0.5;
+  const chimneyBottomY = roofBaseY - roofPeakH * 0.4;
+  ctx.fillStyle = shadeColor(building.color, -25);
+  ctx.fillRect(chimneyX, chimneyBottomY - chimneyH, chimneyW, chimneyH);
+  // Chimney top cap
+  ctx.fillStyle = shadeColor(building.color, -35);
+  ctx.fillRect(chimneyX - 2, chimneyBottomY - chimneyH - 3, chimneyW + 4, 5);
+  // Chimney brick lines
+  ctx.fillStyle = shadeColor(building.color, -32);
+  for (let r = 0; r < chimneyH; r += 8) {
+    ctx.fillRect(chimneyX, chimneyBottomY - chimneyH + r, chimneyW, 1);
+  }
+
+  // === WINDOWS ===
+  const windowSize = 18;
+  const windowFrameW = 2;
+  const windowY = by + TILE * 0.6;
+  const windowPositions: number[] = [];
+
+  // Place windows symmetrically
+  const leftWinX = bx + TILE * 0.5;
+  const rightWinX = bx + bw - TILE * 0.5 - windowSize;
+  windowPositions.push(leftWinX, rightWinX);
+  if (building.width >= 6) {
+    windowPositions.push(bx + bw / 2 - windowSize / 2);
+  }
+
+  for (const wx of windowPositions) {
+    // Window frame (darker)
+    ctx.fillStyle = shadeColor(building.color, -30);
+    ctx.fillRect(wx - windowFrameW, windowY - windowFrameW, windowSize + windowFrameW * 2, windowSize + windowFrameW * 2);
+
+    // Window sill (bottom ledge)
+    ctx.fillStyle = shadeColor(building.color, -20);
+    ctx.fillRect(wx - 3, windowY + windowSize, windowSize + 6, 4);
+
+    // Window glass
+    const glowColor = isNearby ? "#ffffaa" : "#6bb8d4";
+    ctx.fillStyle = glowColor;
+    ctx.fillRect(wx, windowY, windowSize, windowSize);
+
+    // Glass gradient (lighter top)
+    ctx.fillStyle = isNearby ? "rgba(255,255,200,0.4)" : "rgba(135,206,235,0.3)";
+    ctx.fillRect(wx, windowY, windowSize, windowSize / 2);
+
+    // Window cross bars
+    ctx.fillStyle = shadeColor(building.color, -25);
+    ctx.fillRect(wx + windowSize / 2 - 1, windowY, 2, windowSize);
+    ctx.fillRect(wx, windowY + windowSize / 2 - 1, windowSize, 2);
+
+    // Small window shine
+    ctx.fillStyle = "rgba(255,255,255,0.35)";
+    ctx.fillRect(wx + 2, windowY + 2, 4, 4);
+
+    // Tiny curtain detail on sides
+    ctx.fillStyle = shadeColor(building.roofColor, 10);
+    ctx.fillRect(wx + 1, windowY + 1, 3, windowSize - 2);
+    ctx.fillRect(wx + windowSize - 4, windowY + 1, 3, windowSize - 2);
+  }
+
+  // === DOOR ===
+  const doorW = TILE * 0.9;
+  const doorH = TILE * 1.3;
   const doorX = bx + bw / 2 - doorW / 2;
   const doorY = by + bh - doorH;
+
+  // Door frame
+  ctx.fillStyle = shadeColor(building.color, -30);
+  ctx.fillRect(doorX - 4, doorY - 4, doorW + 8, doorH + 4);
+
+  // Arch top for door
+  ctx.fillStyle = shadeColor(building.color, -30);
+  ctx.fillRect(doorX - 2, doorY - 8, doorW + 4, 6);
+
+  // Door body
   ctx.fillStyle = building.doorColor;
   ctx.fillRect(doorX, doorY, doorW, doorH);
-  ctx.fillStyle = "#2d3436";
-  ctx.fillRect(doorX + doorW - 10, doorY + doorH / 2, 5, 5);
-  ctx.strokeStyle = "rgba(0,0,0,0.3)";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(doorX, doorY, doorW, doorH);
 
-  const signW = Math.max(120, building.signText.length * 8 + 24);
+  // Door panels (recessed look)
+  ctx.fillStyle = shadeColor(building.doorColor, -15);
+  const panelPad = 4;
+  const panelW = doorW / 2 - panelPad * 1.5;
+  const panelH = doorH * 0.35;
+  ctx.fillRect(doorX + panelPad, doorY + panelPad + 2, panelW, panelH);
+  ctx.fillRect(doorX + doorW / 2 + panelPad / 2, doorY + panelPad + 2, panelW, panelH);
+  ctx.fillRect(doorX + panelPad, doorY + panelH + panelPad * 2 + 2, panelW, panelH);
+  ctx.fillRect(doorX + doorW / 2 + panelPad / 2, doorY + panelH + panelPad * 2 + 2, panelW, panelH);
+
+  // Door highlight
+  ctx.fillStyle = shadeColor(building.doorColor, 12);
+  ctx.fillRect(doorX, doorY, doorW, 2);
+  ctx.fillRect(doorX, doorY, 2, doorH);
+
+  // Door handle
+  ctx.fillStyle = "#f7de1e";
+  ctx.fillRect(doorX + doorW - 12, doorY + doorH * 0.45, 6, 6);
   ctx.fillStyle = "#e8c170";
-  ctx.fillRect(bx + bw / 2 - signW / 2 - 2, by - roofHeight - 30, signW + 4, 28);
-  ctx.fillStyle = "#1a1c2c";
-  ctx.fillRect(bx + bw / 2 - signW / 2, by - roofHeight - 28, signW, 24);
+  ctx.fillRect(doorX + doorW - 11, doorY + doorH * 0.45 + 1, 4, 4);
 
+  // Doorstep / welcome mat
+  ctx.fillStyle = "#8b5a2b";
+  ctx.fillRect(doorX - 2, by + bh - 4, doorW + 4, 4);
+
+  // === AWNING over door ===
+  const awningW = doorW + 24;
+  const awningH = 12;
+  const awningX = bx + bw / 2 - awningW / 2;
+  const awningY = doorY - 12;
+  ctx.fillStyle = building.roofColor;
+  ctx.fillRect(awningX, awningY, awningW, awningH);
+  // Awning stripes
+  ctx.fillStyle = shadeColor(building.roofColor, 15);
+  for (let s = 0; s < awningW; s += 12) {
+    ctx.fillRect(awningX + s, awningY, 6, awningH);
+  }
+  // Awning shadow
+  ctx.fillStyle = "rgba(0,0,0,0.1)";
+  ctx.fillRect(awningX, awningY + awningH, awningW, 4);
+
+  // === SIGN ===
+  const signW = Math.max(100, building.signText.length * 8 + 30);
+  const signH = 24;
+  const signX = bx + bw / 2 - signW / 2;
+  const signY = roofPeakY - signH - 8;
+
+  // Sign board
+  ctx.fillStyle = "#1a1c2c";
+  ctx.fillRect(signX - 2, signY - 2, signW + 4, signH + 4);
+  ctx.fillStyle = "#e8c170";
+  ctx.fillRect(signX, signY, signW, signH);
+
+  // Sign border detail
+  ctx.fillStyle = "#c4956a";
+  ctx.fillRect(signX + 2, signY + 2, signW - 4, signH - 4);
+  ctx.fillStyle = "#1a1c2c";
+  ctx.fillRect(signX + 3, signY + 3, signW - 6, signH - 6);
+
+  // Sign text
   ctx.fillStyle = "#e8c170";
   ctx.font = "bold 11px monospace";
   ctx.textAlign = "center";
-  ctx.fillText(building.signText, bx + bw / 2, by - roofHeight - 12);
+  ctx.fillText(building.signText, bx + bw / 2, signY + signH - 7);
 
+  // Sign hanging posts
+  ctx.fillStyle = "#5a3a2b";
+  ctx.fillRect(signX + 6, signY + signH, 3, 10);
+  ctx.fillRect(signX + signW - 9, signY + signH, 3, 10);
+
+  // === NEARBY INDICATOR ===
   if (isNearby) {
+    // Glow effect around building
     ctx.strokeStyle = "#e8c170";
     ctx.lineWidth = 2;
-    ctx.setLineDash([5, 5]);
-    ctx.strokeRect(bx - 6, by - roofHeight - 32, bw + 12, bh + roofHeight + 38);
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(bx - roofOverhang - 4, roofPeakY - signH - 14, bw + roofOverhang * 2 + 8, bh + roofPeakH + signH + 26);
     ctx.setLineDash([]);
 
+    // Action prompt
+    ctx.fillStyle = "rgba(26,28,44,0.85)";
+    const promptW = 140;
+    ctx.fillRect(bx + bw / 2 - promptW / 2, by + bh + 12, promptW, 22);
+    ctx.strokeStyle = "#e8c170";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(bx + bw / 2 - promptW / 2, by + bh + 12, promptW, 22);
+
     ctx.fillStyle = "#e8c170";
-    ctx.font = "bold 13px monospace";
+    ctx.font = "bold 11px monospace";
     ctx.textAlign = "center";
-    ctx.fillText("[ SPACE / ENTER ]", bx + bw / 2, by + bh + 24);
+    ctx.fillText("[ SPACE / ENTER ]", bx + bw / 2, by + bh + 27);
   }
 }
 
