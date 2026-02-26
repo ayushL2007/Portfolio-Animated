@@ -6,9 +6,11 @@ interface DialogBoxProps {
   text: string;
   speaker?: string;
   onDismiss: () => void;
+  /** If set, the dialog auto-closes after this many ms once fully typed */
+  autoCloseMs?: number;
 }
 
-export default function DialogBox({ text, speaker, onDismiss }: DialogBoxProps) {
+export default function DialogBox({ text, speaker, onDismiss, autoCloseMs }: DialogBoxProps) {
   const [displayedText, setDisplayedText] = useState("");
   const [isComplete, setIsComplete] = useState(false);
 
@@ -28,6 +30,15 @@ export default function DialogBox({ text, speaker, onDismiss }: DialogBoxProps) 
     return () => clearInterval(interval);
   }, [text]);
 
+  // Auto-close after timeout when text finishes typing
+  useEffect(() => {
+    if (!isComplete || !autoCloseMs) return;
+    const timer = setTimeout(() => {
+      onDismiss();
+    }, autoCloseMs);
+    return () => clearTimeout(timer);
+  }, [isComplete, autoCloseMs, onDismiss]);
+
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === " " || e.key === "Enter" || e.key === "Escape") {
@@ -35,6 +46,7 @@ export default function DialogBox({ text, speaker, onDismiss }: DialogBoxProps) 
         if (isComplete) {
           onDismiss();
         } else {
+          // Skip typewriter, show full text immediately
           setDisplayedText(text);
           setIsComplete(true);
         }

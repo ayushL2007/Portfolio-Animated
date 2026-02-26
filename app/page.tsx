@@ -12,7 +12,7 @@ import { type BuildingInterior } from "@/lib/interior-data";
 
 export default function Home() {
   const [started, setStarted] = useState(false);
-  const [dialog, setDialog] = useState<{ text: string; speaker?: string } | null>(null);
+  const [dialog, setDialog] = useState<{ text: string; speaker?: string; autoCloseMs?: number } | null>(null);
   const [nearBuilding, setNearBuilding] = useState<Building | null>(null);
   const [currentLocation, setCurrentLocation] = useState<GameLocation>({ type: "overworld" });
   // Section modal shown after receptionist dialog finishes
@@ -36,11 +36,9 @@ export default function Home() {
     setDialog({
       text: `Entering ${building.signText}...`,
       speaker: undefined,
+      autoCloseMs: 800,
     });
-    dialogQueueRef.current = [{
-      text: "Talk to the receptionist for info! Walk to the EXIT mat to leave.",
-      speaker: undefined,
-    }];
+    dialogQueueRef.current = [];
     activeReceptionistBuildingRef.current = null;
     setTimeout(() => {
       const enterFn = (window as unknown as Record<string, unknown>).__gameEnterBuilding as ((id: string) => void) | undefined;
@@ -56,6 +54,7 @@ export default function Home() {
     setDialog({
       text: "You left the building. Keep exploring AYUSH TOWN!",
       speaker: undefined,
+      autoCloseMs: 800,
     });
   }, []);
 
@@ -164,6 +163,7 @@ export default function Home() {
           text={dialog.text}
           speaker={dialog.speaker}
           onDismiss={handleDismissDialog}
+          autoCloseMs={dialog.autoCloseMs}
         />
       )}
 
