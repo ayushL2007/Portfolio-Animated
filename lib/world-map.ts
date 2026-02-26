@@ -73,6 +73,12 @@ export function generateMap(): number[][] {
     if (map[y][15] === GRASS) map[y][15] = PATH;
   }
 
+  // Path to arcade building (bottom-left)
+  for (let y = 19; y < 25; y++) {
+    if (map[y][5] === GRASS) map[y][5] = PATH;
+    if (map[y][6] === GRASS) map[y][6] = PATH;
+  }
+
   // === WATER FEATURES ===
   // Pond on the east side
   const pondCenterX = 29;
@@ -92,10 +98,18 @@ export function generateMap(): number[][] {
   if (map[5][30] === GRASS) map[5][30] = WATER;
   if (map[6][30] === GRASS) map[6][30] = WATER;
 
-  // Small stream bottom-left
-  for (let x = 0; x < 4; x++) {
-    if (map[25][x] === GRASS) map[25][x] = WATER;
-    if (map[26][x] === GRASS) map[26][x] = WATER;
+  // Fishing pond bottom-left (larger pond)
+  const fishPondTiles = [
+    [1, 23], [2, 23], [3, 23],
+    [0, 24], [1, 24], [2, 24], [3, 24], [4, 24],
+    [0, 25], [1, 25], [2, 25], [3, 25], [4, 25], [5, 25],
+    [0, 26], [1, 26], [2, 26], [3, 26], [4, 26],
+    [1, 27], [2, 27], [3, 27],
+  ];
+  for (const [wx, wy] of fishPondTiles) {
+    if (wy < MAP_HEIGHT && wx < MAP_WIDTH && map[wy][wx] === GRASS) {
+      map[wy][wx] = WATER;
+    }
   }
 
   // === FLOWER PATCHES ===
@@ -122,8 +136,8 @@ export function generateMap(): number[][] {
     // Right border
     [31, 2], [31, 4], [31, 8], [31, 10], [31, 12], [31, 14], [31, 16], [31, 18], [31, 20], [31, 22],
     [30, 10], [30, 14], [30, 18], [30, 22],
-    // Bottom border
-    [0, 27], [1, 27], [2, 27], [3, 27], [4, 27], [5, 27], [6, 27], [7, 27],
+    // Bottom border (skip lower-left pond area)
+    [6, 27], [7, 27],
     [20, 27], [21, 27], [22, 27], [23, 27], [24, 27], [25, 27], [26, 27], [27, 27], [28, 27], [29, 27], [30, 27], [31, 27],
     // Interior decorative trees
     [2, 9], [28, 9], [2, 18], [28, 18],
@@ -133,7 +147,7 @@ export function generateMap(): number[][] {
     // Park area bottom-center
     [13, 26], [14, 26], [15, 26], [16, 26], [17, 26],
     // Scattered interior
-    [10, 11], [20, 7], [27, 14], [3, 20],
+    [10, 11], [20, 7], [27, 14],
     [29, 16], [30, 16],
   ];
 
@@ -182,6 +196,20 @@ export function getNearbyBuilding(
     if (dist <= 2) return b;
   }
   return null;
+}
+
+// Check if player is near a fishable water tile
+export function isNearPond(map: number[][], px: number, py: number): boolean {
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      const nx = px + dx;
+      const ny = py + dy;
+      if (nx >= 0 && ny >= 0 && nx < MAP_WIDTH && ny < MAP_HEIGHT) {
+        if (map[ny][nx] === WATER) return true;
+      }
+    }
+  }
+  return false;
 }
 
 // Get nearby NPC

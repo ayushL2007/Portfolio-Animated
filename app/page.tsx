@@ -7,6 +7,8 @@ import DialogBox from "@/components/dialog-box";
 import SectionModal from "@/components/section-modal";
 import DPadOverlay from "@/components/dpad-overlay";
 import GameHUD from "@/components/game-hud";
+import FishingGame from "@/components/fishing-game";
+import ArcadeGames from "@/components/arcade-games";
 import { type Building, type NPC, ayushFacts, buildings as allBuildings } from "@/lib/game-data";
 import { type BuildingInterior } from "@/lib/interior-data";
 
@@ -17,10 +19,13 @@ export default function Home() {
   const [currentLocation, setCurrentLocation] = useState<GameLocation>({ type: "overworld" });
   // Section modal shown after receptionist dialog finishes
   const [sectionModal, setSectionModal] = useState<Building | null>(null);
+  const [showFishing, setShowFishing] = useState(false);
+  const [showArcade, setShowArcade] = useState(false);
+  const [nearPond, setNearPond] = useState(false);
   const npcFactIndexRef = useRef<Record<string, number>>({});
   const dialogQueueRef = useRef<{ text: string; speaker?: string }[]>([]);
 
-  const isPaused = !!dialog || !!sectionModal;
+  const isPaused = !!dialog || !!sectionModal || showFishing || showArcade;
 
   const handleStart = useCallback(() => {
     setStarted(true);
@@ -59,6 +64,10 @@ export default function Home() {
   }, []);
 
   const handleReceptionistTalk = useCallback((interior: BuildingInterior) => {
+    if (interior.buildingId === "arcade") {
+      setShowArcade(true);
+      return;
+    }
     // Skip dialog entirely -- open the section modal directly
     const building = allBuildings.find((b) => b.id === interior.buildingId);
     if (building) {
@@ -85,6 +94,14 @@ export default function Home() {
 
   const handleNPCLeave = useCallback(() => {}, []);
 
+  const handleFishingStart = useCallback(() => {
+    setShowFishing(true);
+  }, []);
+
+  const handleNearPond = useCallback((near: boolean) => {
+    setNearPond(near);
+  }, []);
+
   const handleNearBuilding = useCallback((building: Building | null) => {
     setNearBuilding(building);
   }, []);
@@ -105,6 +122,7 @@ export default function Home() {
   }, []);
 
   const handleAction = useCallback(() => {
+    if (showFishing || showArcade) return;
     if (sectionModal) {
       setSectionModal(null);
       return;
@@ -119,7 +137,7 @@ export default function Home() {
       bubbles: true,
     });
     window.dispatchEvent(event);
-  }, [dialog, sectionModal, handleDismissDialog]);
+  }, [dialog, sectionModal, showFishing, showArcade, handleDismissDialog]);
 
   if (!started) {
     return <TitleScreen onStart={handleStart} />;
@@ -135,6 +153,8 @@ export default function Home() {
         onNPCLeave={handleNPCLeave}
         onNearBuilding={handleNearBuilding}
         onLocationChange={handleLocationChange}
+        onFishingStart={handleFishingStart}
+        onNearPond={handleNearPond}
         isPaused={isPaused}
         currentLocation={currentLocation}
       />
@@ -155,6 +175,22 @@ export default function Home() {
           building={sectionModal}
           onClose={handleCloseModal}
         />
+      )}
+
+      {showFishing && (
+        <FishingGame onClose={() => setShowFishing(false)} />
+      )}
+
+      {showArcade && (
+        <ArcadeGames onClose={() => setShowArcade(false)} />
+      )}
+
+      {nearPond && !dialog && !sectionModal && !showFishing && !showArcade && currentLocation.type === "overworld" && (
+        <div className="fixed bottom-32 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+          <div className="pixel-border bg-card/90 px-4 py-2">
+            <p className="font-mono text-xs text-primary animate-pulse pixel-text">PRESS SPACE TO FISH</p>
+          </div>
+        </div>
       )}
 
       <DPadOverlay onAction={handleAction} disabled={isPaused} />

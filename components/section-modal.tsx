@@ -80,6 +80,8 @@ function renderSection(section: string) {
       return <LinksSection />;
     case "contact":
       return <ContactSection />;
+    case "arcade":
+      return <ArcadeSection />;
     default:
       return null;
   }
@@ -314,6 +316,34 @@ function LinksSection() {
           </p>
         </a>
       ))}
+    </div>
+  );
+}
+
+function ArcadeSection() {
+  return (
+    <div className="flex flex-col gap-5">
+      <h3 className="text-primary text-2xl font-mono">{"Pixel Arcade"}</h3>
+      <p className="text-muted-foreground text-sm font-mono leading-relaxed">
+        {"Take a break and play some retro mini-games! Close this modal and talk to the ARCADE MASTER again, or use the games below:"}
+      </p>
+      <div className="flex flex-col gap-3">
+        <div className="border-2 border-border p-4">
+          <h4 className="text-foreground text-lg font-mono">{"SNAKE"}</h4>
+          <p className="text-muted-foreground text-sm font-mono leading-relaxed mt-1">
+            {"Classic snake game. Use arrow keys to navigate and eat food to grow. Don't hit the walls or yourself!"}
+          </p>
+        </div>
+        <div className="border-2 border-border p-4">
+          <h4 className="text-foreground text-lg font-mono">{"MEMORY MATCH"}</h4>
+          <p className="text-muted-foreground text-sm font-mono leading-relaxed mt-1">
+            {"Match pairs of Ayush's tech skills. Flip cards and find all matching pairs in the fewest moves!"}
+          </p>
+        </div>
+      </div>
+      <p className="text-accent text-xs font-sans">
+        {"Close this modal and press SPACE near the ARCADE MASTER to play!"}
+      </p>
     </div>
   );
 }

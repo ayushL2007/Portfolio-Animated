@@ -18,6 +18,7 @@ import {
   isWalkable,
   getNearbyBuilding,
   getNearbyNPC,
+  isNearPond,
   MAP_WIDTH,
   MAP_HEIGHT,
   GRASS,
@@ -53,6 +54,8 @@ interface GameCanvasProps {
   onNPCLeave: () => void;
   onNearBuilding: (building: Building | null) => void;
   onLocationChange: (location: GameLocation) => void;
+  onFishingStart: () => void;
+  onNearPond: (near: boolean) => void;
   isPaused: boolean;
   currentLocation: GameLocation;
 }
@@ -65,6 +68,8 @@ export default function GameCanvas({
   onNPCLeave,
   onNearBuilding,
   onLocationChange,
+  onFishingStart,
+  onNearPond,
   isPaused,
   currentLocation,
 }: GameCanvasProps) {
@@ -123,6 +128,10 @@ export default function GameCanvas({
             onNPCTalk(nearNPC);
             return;
           }
+          if (isNearPond(mapRef.current, p.x, p.y)) {
+            onFishingStart();
+            return;
+          }
         } else if (loc.type === "interior") {
           const interior = buildingInteriors[loc.buildingId];
           if (interior && isNearReceptionist(p.x, p.y, interior.receptionist)) {
@@ -149,7 +158,7 @@ export default function GameCanvas({
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
-  }, [isPaused, onBuildingEnter, onBuildingExit, onNPCTalk, onReceptionistTalk]);
+  }, [isPaused, onBuildingEnter, onBuildingExit, onNPCTalk, onReceptionistTalk, onFishingStart]);
 
   const handleDPad = useCallback(
     (direction: string) => {
@@ -279,6 +288,8 @@ export default function GameCanvas({
       onNearBuilding(nearBuilding);
       const nearNPC = getNearbyNPC(p.x, p.y);
       if (!nearNPC) onNPCLeave();
+      const nearWater = isNearPond(map, p.x, p.y);
+      onNearPond(nearWater);
 
       // --- Edge-scroll camera: player moves on screen, camera only scrolls at edges ---
       const edgeMargin = TILE * 4; // tiles of margin before camera scrolls
@@ -424,7 +435,7 @@ export default function GameCanvas({
 
     requestAnimationFrame(gameLoop);
     return () => { running = false; };
-  }, [canvasSize, isPaused, onNearBuilding, onNPCLeave, onBuildingExit]);
+  }, [canvasSize, isPaused, onNearBuilding, onNPCLeave, onBuildingExit, onNearPond]);
 
   return (
     <canvas
@@ -632,5 +643,23 @@ function drawWater(
   if ((x + y + Math.floor(frame / 30)) % 7 === 0) {
     ctx.fillStyle = "#aad4ff";
     ctx.fillRect(px + 18, py + 18 + wave, 4, 4);
+  }
+
+  // Pixel fish swimming in some tiles
+  const fishSeed = (x * 13 + y * 7) % 11;
+  if (fishSeed < 3) {
+    const fishX = px + 8 + Math.sin(frame * 0.025 + fishSeed) * 14;
+    const fishY = py + 16 + wave * 0.5 + fishSeed * 4;
+    const fishColors = ["#e83b3b", "#f89720", "#f7de1e"];
+    ctx.fillStyle = fishColors[fishSeed];
+    // Fish body (tiny pixel art)
+    ctx.fillRect(fishX, fishY, 8, 4);
+    ctx.fillRect(fishX + 8, fishY + 1, 2, 2);
+    // Tail
+    const tailDir = Math.sin(frame * 0.025 + fishSeed) > 0 ? -1 : 1;
+    ctx.fillRect(fishX - 3, fishY + tailDir, 3, 3);
+    // Eye
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(fishX + 6, fishY + 1, 1, 1);
   }
 }

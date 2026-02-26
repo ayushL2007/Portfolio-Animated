@@ -92,7 +92,7 @@ export const buildingInteriors: Record<string, BuildingInterior> = {
       name: "PROF. OAK",
       color: "#5b6ee1",
       dialogLines: [
-        `Welcome to my lab! Let me tell you about ${portfolioData.name}.`,
+        `Welcome to the ORIGIN HOUSE! Let me tell you about ${portfolioData.name}.`,
         about.bio,
         about.detail,
         `${portfolioData.name} is a ${portfolioData.title}. ${portfolioData.tagline}!`,
@@ -113,7 +113,7 @@ export const buildingInteriors: Record<string, BuildingInterior> = {
       name: "SHOP CLERK",
       color: "#e83b3b",
       dialogLines: [
-        "Welcome to POKE MART! Here we showcase Ayush's best projects.",
+        "Welcome to the BUILD LAB! Here we showcase Ayush's best projects.",
         `Project 1: ${projects[0].name} -- ${projects[0].description} Tech: ${projects[0].tech.join(", ")}.`,
         `Project 2: ${projects[1].name} -- ${projects[1].description} Tech: ${projects[1].tech.join(", ")}.`,
         `Project 3: ${projects[2].name} -- ${projects[2].description} Tech: ${projects[2].tech.join(", ")}.`,
@@ -136,7 +136,7 @@ export const buildingInteriors: Record<string, BuildingInterior> = {
       name: "SENSEI",
       color: "#f7de1e",
       dialogLines: [
-        "Welcome to the SKILLS DOJO! Let me show you Ayush's arsenal.",
+        "Welcome to the TECH DOJO! Let me show you Ayush's arsenal.",
         `Ayush's toolkit: ${skills.map(s => s.name).join(", ")}. A true full-stack polyglot!`,
         "He has deep knowledge of OS internals and computer organization -- real low-level wizardry on top of high-level frameworks.",
       ],
@@ -157,7 +157,7 @@ export const buildingInteriors: Record<string, BuildingInterior> = {
       name: "GYM LEADER",
       color: "#3ddc84",
       dialogLines: [
-        "Welcome, challenger! This gym displays Ayush's battle-tested experience.",
+        "Welcome to the BATTLE TOWER! Here's Ayush's battle-tested experience.",
         `Role: ${experience[0].role} at ${experience[0].org} (${experience[0].period}). ${experience[0].description}`,
         `Role: ${experience[1].role} at ${experience[1].org} (${experience[1].period}). ${experience[1].description}`,
         `Role: ${experience[2].role} at ${experience[2].org} (${experience[2].period}). ${experience[2].description}`,
@@ -178,7 +178,7 @@ export const buildingInteriors: Record<string, BuildingInterior> = {
       name: "TEACHER",
       color: "#f89720",
       dialogLines: [
-        "Welcome to TRAINER SCHOOL! Let me walk you through Ayush's education.",
+        "Welcome to SCHOLAR HALL! Let me walk you through Ayush's education.",
         `${education[0].degree} at ${education[0].school} (${education[0].period}). ${education[0].details.join(". ")}.`,
         `${education[1].degree} at ${education[1].school} (${education[1].period}). ${education[1].details.join(". ")}.`,
         `${education[2].degree} at ${education[2].school} (${education[2].period}). ${education[2].details.join(". ")}.`,
@@ -200,7 +200,7 @@ export const buildingInteriors: Record<string, BuildingInterior> = {
       name: "LIBRARIAN",
       color: "#5bc4e8",
       dialogLines: [
-        "Welcome to the POKE LIBRARY! Here are all of Ayush's important links.",
+        "Welcome to the LINK SHRINE! Here are all of Ayush's important links.",
         `GitHub: ${contact.github} | LinkedIn: ${contact.linkedin} | Email: ${contact.email}`,
         "Also check out his original Rails portfolio at github.com/ayushL2007/Portfolio -- crystal-tile UI and scroll animations!",
       ],
@@ -220,13 +220,33 @@ export const buildingInteriors: Record<string, BuildingInterior> = {
       name: "NURSE JOY",
       color: "#9b59b6",
       dialogLines: [
-        `Welcome to the POKEMON CENTER! I can help you get in touch with ${portfolioData.name}.`,
+        `Welcome to the SIGNAL HUB! I can help you get in touch with ${portfolioData.name}.`,
         `Reach him on GitHub (${contact.github}), LinkedIn (${contact.linkedin}), or email (${contact.email}).`,
         `${portfolioData.name} is ${portfolioData.tagline} -- don't hesitate to reach out!`,
       ],
     },
     floorColor: "#4a3a5a",
     wallColor: "#5e2d79",
+  },
+  arcade: {
+    buildingId: "arcade",
+    map: makeInteriorMap({
+      shelves: [[1, 1], [2, 1], [7, 1], [8, 1]],
+      plants: [[1, 6], [8, 6]],
+      rugs: [[3, 4], [4, 4], [5, 4], [6, 4], [3, 5], [4, 5], [5, 5], [6, 5]],
+    }),
+    receptionist: {
+      x: 5,
+      y: 2,
+      name: "ARCADE MASTER",
+      color: "#e83be8",
+      dialogLines: [
+        "Welcome to the PIXEL ARCADE! Step right up and play some retro games!",
+        "We have Snake and Memory Match. Choose your challenge!",
+      ],
+    },
+    floorColor: "#3a2a4a",
+    wallColor: "#8b008b",
   },
 };
 
