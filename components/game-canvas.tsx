@@ -40,7 +40,7 @@ import {
 import { drawInterior, INTERIOR_TILE } from "@/lib/interior-renderer";
 
 // Movement: lower cooldown for smoother held-key walking
-const MOVE_COOLDOWN = 90;
+const MOVE_COOLDOWN = 130;
 
 export type GameLocation =
   | { type: "overworld" }
