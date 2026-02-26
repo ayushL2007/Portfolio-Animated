@@ -19,8 +19,6 @@ export default function Home() {
   const [sectionModal, setSectionModal] = useState<Building | null>(null);
   const npcFactIndexRef = useRef<Record<string, number>>({});
   const dialogQueueRef = useRef<{ text: string; speaker?: string }[]>([]);
-  // Track which building's receptionist we're talking to for modal trigger
-  const activeReceptionistBuildingRef = useRef<string | null>(null);
 
   const isPaused = !!dialog || !!sectionModal;
 
@@ -39,7 +37,6 @@ export default function Home() {
       autoCloseMs: 800,
     });
     dialogQueueRef.current = [];
-    activeReceptionistBuildingRef.current = null;
     setTimeout(() => {
       const enterFn = (window as unknown as Record<string, unknown>).__gameEnterBuilding as ((id: string) => void) | undefined;
       if (enterFn) enterFn(building.id);
@@ -49,7 +46,6 @@ export default function Home() {
   const handleBuildingExit = useCallback(() => {
     setCurrentLocation({ type: "overworld" });
     dialogQueueRef.current = [];
-    activeReceptionistBuildingRef.current = null;
     setSectionModal(null);
     setDialog({
       text: "You left the building. Keep exploring AYUSH TOWN!",
@@ -63,14 +59,11 @@ export default function Home() {
   }, []);
 
   const handleReceptionistTalk = useCallback((interior: BuildingInterior) => {
-    const lines = interior.receptionist.dialogLines;
-    if (lines.length === 0) return;
-    activeReceptionistBuildingRef.current = interior.buildingId;
-    setDialog({ text: lines[0], speaker: interior.receptionist.name });
-    dialogQueueRef.current = lines.slice(1).map((text) => ({
-      text,
-      speaker: interior.receptionist.name,
-    }));
+    // Skip dialog entirely -- open the section modal directly
+    const building = allBuildings.find((b) => b.id === interior.buildingId);
+    if (building) {
+      setSectionModal(building);
+    }
   }, []);
 
   const handleNPCTalk = useCallback((npc: NPC) => {
@@ -87,7 +80,6 @@ export default function Home() {
       message = ayushFacts[factIdx];
       npcFactIndexRef.current[npc.id] = idx + 1;
     }
-    activeReceptionistBuildingRef.current = null;
     setDialog({ text: message, speaker: npc.name });
   }, []);
 
@@ -97,7 +89,7 @@ export default function Home() {
     setNearBuilding(building);
   }, []);
 
-  // Dismiss dialog -- advances queue; when receptionist dialog ends, show section modal
+  // Dismiss dialog -- advances queue if any remain
   const handleDismissDialog = useCallback(() => {
     const queue = dialogQueueRef.current;
     if (queue.length > 0) {
@@ -105,15 +97,6 @@ export default function Home() {
       setDialog(next);
     } else {
       setDialog(null);
-      // If we just finished a receptionist conversation, show the section modal
-      const buildingId = activeReceptionistBuildingRef.current;
-      if (buildingId) {
-        const building = allBuildings.find((b) => b.id === buildingId);
-        if (building) {
-          setSectionModal(building);
-        }
-        activeReceptionistBuildingRef.current = null;
-      }
     }
   }, []);
 
