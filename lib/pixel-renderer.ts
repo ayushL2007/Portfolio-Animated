@@ -376,7 +376,7 @@ function drawPlayerRight(ctx: CanvasRenderingContext2D, px: number, py: number, 
   ctx.fillRect(px + 10 * f - legSwing, py + 28 * f + bounce, 6 * f, 3 * f);
 }
 
-// Draw an NPC
+// Draw an NPC with unique appearance per character type
 export function drawNPC(
   ctx: CanvasRenderingContext2D,
   npc: NPC,
@@ -387,58 +387,488 @@ export function drawNPC(
 ) {
   const px = npc.x * TILE - camX;
   const py = npc.y * TILE - camY;
+  const f = TILE / 48;
 
-  ctx.fillStyle = "rgba(0,0,0,0.2)";
+  // Shadow
+  ctx.fillStyle = "rgba(0,0,0,0.25)";
   ctx.beginPath();
-  ctx.ellipse(px + TILE / 2, py + TILE - 3, 10, 4, 0, 0, Math.PI * 2);
+  ctx.ellipse(px + TILE / 2, py + TILE - 2, 12 * f, 4 * f, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  const bob = Math.sin(frame * 0.05) * 2;
+  const bob = Math.sin(frame * 0.045) * 2;
+  const blinkCycle = frame % 200;
+  const blink = blinkCycle >= 195;
+  const skinColor = "#f4d7a7";
+  const skinShadow = "#d4b78a";
 
-  ctx.fillStyle = npc.color;
-  ctx.fillRect(px + 14, py + 18 + bob, 20, 14);
-
-  ctx.fillStyle = "#f4d7a7";
-  ctx.fillRect(px + 14, py + 3 + bob, 20, 16);
-
-  ctx.fillStyle = npc.color;
-  ctx.fillRect(px + 13, py + bob, 22, 7);
-
-  const blinkCycle = frame % 180;
-  if (blinkCycle < 175) {
-    ctx.fillStyle = "#1a1c2c";
-    ctx.fillRect(px + 17, py + 10 + bob, 4, 3);
-    ctx.fillRect(px + 27, py + 10 + bob, 4, 3);
-    ctx.fillStyle = "#f4f4f4";
-    ctx.fillRect(px + 17, py + 10 + bob, 2, 2);
-    ctx.fillRect(px + 27, py + 10 + bob, 2, 2);
-  } else {
-    ctx.fillStyle = "#1a1c2c";
-    ctx.fillRect(px + 17, py + 12 + bob, 4, 1);
-    ctx.fillRect(px + 27, py + 12 + bob, 4, 1);
+  // Dispatch to unique NPC sprite based on id
+  switch (npc.id) {
+    case "guide": drawNPC_ProfOak(ctx, px, py, f, bob, blink, npc.color); break;
+    case "coder": drawNPC_BugCatcher(ctx, px, py, f, bob, blink, npc.color); break;
+    case "student": drawNPC_Lass(ctx, px, py, f, bob, blink, npc.color); break;
+    case "hiker": drawNPC_Hiker(ctx, px, py, f, bob, blink, npc.color); break;
+    case "swimmer": drawNPC_Swimmer(ctx, px, py, f, bob, blink, npc.color); break;
+    case "ranger": drawNPC_Ranger(ctx, px, py, f, bob, blink, npc.color); break;
+    case "rival": drawNPC_Rival(ctx, px, py, f, bob, blink, npc.color); break;
+    default: drawNPC_Generic(ctx, px, py, f, bob, blink, npc.color, skinColor, skinShadow); break;
   }
 
-  ctx.fillStyle = "#3f3f74";
-  ctx.fillRect(px + 17, py + 32 + bob, 6, 10);
-  ctx.fillRect(px + 25, py + 32 + bob, 6, 10);
-
-  ctx.fillStyle = "#1a1c2c";
-  ctx.fillRect(px + 16, py + 42 + bob, 7, 3);
-  ctx.fillRect(px + 25, py + 42 + bob, 7, 3);
-
+  // Name tag and exclamation mark on proximity
   if (isNearby) {
-    const nameWidth = npc.name.length * 7 + 14;
-    ctx.fillStyle = "rgba(26,28,44,0.85)";
-    ctx.fillRect(px + TILE / 2 - nameWidth / 2, py - 28, nameWidth, 18);
+    const nameWidth = npc.name.length * 7 + 16;
+    ctx.fillStyle = "rgba(26,28,44,0.9)";
+    ctx.fillRect(px + TILE / 2 - nameWidth / 2, py - 30, nameWidth, 20);
+    ctx.strokeStyle = npc.color;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(px + TILE / 2 - nameWidth / 2, py - 30, nameWidth, 20);
     ctx.fillStyle = npc.color;
     ctx.font = "bold 10px monospace";
     ctx.textAlign = "center";
-    ctx.fillText(npc.name, px + TILE / 2, py - 14);
+    ctx.fillText(npc.name, px + TILE / 2, py - 15);
 
+    // Bouncing exclamation
+    const exBounce = Math.sin(frame * 0.12) * 3;
     ctx.fillStyle = "#e8c170";
     ctx.font = "bold 22px monospace";
-    ctx.fillText("!", px + TILE / 2, py - 34);
+    ctx.fillText("!", px + TILE / 2, py - 36 + exBounce);
+
+    ctx.fillStyle = "#e8c170";
+    ctx.font = "bold 11px monospace";
+    ctx.fillText("[ SPACE ]", px + TILE / 2, py + TILE + 16);
   }
+}
+
+// --- PROF. OAK: Old professor with white lab coat and grey hair ---
+function drawNPC_ProfOak(ctx: CanvasRenderingContext2D, px: number, py: number, f: number, bob: number, blink: boolean, color: string) {
+  // Grey hair
+  ctx.fillStyle = "#9badb7";
+  ctx.fillRect(px + 10 * f, py - 4 * f + bob, 28 * f, 10 * f);
+  ctx.fillRect(px + 8 * f, py + 2 * f + bob, 6 * f, 8 * f);
+  ctx.fillRect(px + 34 * f, py + 2 * f + bob, 6 * f, 8 * f);
+  // Face
+  ctx.fillStyle = "#f4d7a7";
+  ctx.fillRect(px + 12 * f, py + 4 * f + bob, 24 * f, 16 * f);
+  // Eyes
+  if (!blink) {
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 16 * f, py + 10 * f + bob, 4 * f, 4 * f);
+    ctx.fillRect(px + 28 * f, py + 10 * f + bob, 4 * f, 4 * f);
+    ctx.fillStyle = "#f4f4f4";
+    ctx.fillRect(px + 17 * f, py + 10 * f + bob, 2 * f, 2 * f);
+    ctx.fillRect(px + 29 * f, py + 10 * f + bob, 2 * f, 2 * f);
+  } else {
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 16 * f, py + 13 * f + bob, 5 * f, 1 * f);
+    ctx.fillRect(px + 28 * f, py + 13 * f + bob, 5 * f, 1 * f);
+  }
+  // Mouth
+  ctx.fillStyle = "#d4b78a";
+  ctx.fillRect(px + 20 * f, py + 16 * f + bob, 8 * f, 2 * f);
+  // Lab coat (white)
+  ctx.fillStyle = "#f0f0f0";
+  ctx.fillRect(px + 10 * f, py + 20 * f + bob, 28 * f, 14 * f);
+  ctx.fillStyle = "#dcdcdc";
+  ctx.fillRect(px + 22 * f, py + 20 * f + bob, 3 * f, 14 * f);
+  // Shirt underneath
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 18 * f, py + 21 * f + bob, 12 * f, 4 * f);
+  // Arms
+  ctx.fillStyle = "#f0f0f0";
+  ctx.fillRect(px + 5 * f, py + 21 * f + bob, 6 * f, 10 * f);
+  ctx.fillRect(px + 37 * f, py + 21 * f + bob, 6 * f, 10 * f);
+  ctx.fillStyle = "#f4d7a7";
+  ctx.fillRect(px + 5 * f, py + 31 * f + bob, 6 * f, 3 * f);
+  ctx.fillRect(px + 37 * f, py + 31 * f + bob, 6 * f, 3 * f);
+  // Pants
+  ctx.fillStyle = "#5a3a2b";
+  ctx.fillRect(px + 13 * f, py + 34 * f + bob, 10 * f, 8 * f);
+  ctx.fillRect(px + 25 * f, py + 34 * f + bob, 10 * f, 8 * f);
+  // Shoes
+  ctx.fillStyle = "#1a1c2c";
+  ctx.fillRect(px + 12 * f, py + 42 * f + bob, 11 * f, 4 * f);
+  ctx.fillRect(px + 25 * f, py + 42 * f + bob, 11 * f, 4 * f);
+}
+
+// --- BUG CATCHER: Straw hat, net, shorts ---
+function drawNPC_BugCatcher(ctx: CanvasRenderingContext2D, px: number, py: number, f: number, bob: number, blink: boolean, color: string) {
+  // Straw hat (wide brim)
+  ctx.fillStyle = "#e8c170";
+  ctx.fillRect(px + 4 * f, py - 2 * f + bob, 40 * f, 6 * f);
+  ctx.fillStyle = "#c4a76c";
+  ctx.fillRect(px + 12 * f, py - 6 * f + bob, 24 * f, 6 * f);
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 14 * f, py - 4 * f + bob, 20 * f, 3 * f);
+  // Face
+  ctx.fillStyle = "#f4d7a7";
+  ctx.fillRect(px + 12 * f, py + 3 * f + bob, 24 * f, 16 * f);
+  // Eyes - big excited
+  if (!blink) {
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 16 * f, py + 9 * f + bob, 5 * f, 5 * f);
+    ctx.fillRect(px + 27 * f, py + 9 * f + bob, 5 * f, 5 * f);
+    ctx.fillStyle = "#f4f4f4";
+    ctx.fillRect(px + 18 * f, py + 9 * f + bob, 2 * f, 2 * f);
+    ctx.fillRect(px + 29 * f, py + 9 * f + bob, 2 * f, 2 * f);
+  } else {
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 16 * f, py + 13 * f + bob, 5 * f, 1 * f);
+    ctx.fillRect(px + 27 * f, py + 13 * f + bob, 5 * f, 1 * f);
+  }
+  // Grin
+  ctx.fillStyle = "#d4b78a";
+  ctx.fillRect(px + 19 * f, py + 16 * f + bob, 10 * f, 2 * f);
+  // T-shirt
+  ctx.fillStyle = "#f4f4f4";
+  ctx.fillRect(px + 10 * f, py + 19 * f + bob, 28 * f, 10 * f);
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 16 * f, py + 20 * f + bob, 16 * f, 8 * f);
+  // Arms
+  ctx.fillStyle = "#f4d7a7";
+  ctx.fillRect(px + 5 * f, py + 20 * f + bob, 6 * f, 10 * f);
+  // Net arm (right)
+  ctx.fillStyle = "#f4d7a7";
+  ctx.fillRect(px + 37 * f, py + 18 * f + bob, 6 * f, 12 * f);
+  // Bug net stick
+  ctx.fillStyle = "#8b5a2b";
+  ctx.fillRect(px + 40 * f, py - 6 * f + bob, 3 * f, 26 * f);
+  // Net hoop
+  ctx.fillStyle = "#a0c8a0";
+  ctx.fillRect(px + 37 * f, py - 10 * f + bob, 9 * f, 6 * f);
+  ctx.fillStyle = "#c8e8c8";
+  ctx.fillRect(px + 38 * f, py - 9 * f + bob, 7 * f, 4 * f);
+  // Shorts
+  ctx.fillStyle = "#5a3a2b";
+  ctx.fillRect(px + 13 * f, py + 29 * f + bob, 10 * f, 6 * f);
+  ctx.fillRect(px + 25 * f, py + 29 * f + bob, 10 * f, 6 * f);
+  // Legs
+  ctx.fillStyle = "#f4d7a7";
+  ctx.fillRect(px + 14 * f, py + 35 * f + bob, 8 * f, 7 * f);
+  ctx.fillRect(px + 26 * f, py + 35 * f + bob, 8 * f, 7 * f);
+  // Shoes
+  ctx.fillStyle = "#e83b3b";
+  ctx.fillRect(px + 12 * f, py + 42 * f + bob, 10 * f, 4 * f);
+  ctx.fillRect(px + 26 * f, py + 42 * f + bob, 10 * f, 4 * f);
+}
+
+// --- LASS: Girl with bow, skirt ---
+function drawNPC_Lass(ctx: CanvasRenderingContext2D, px: number, py: number, f: number, bob: number, blink: boolean, color: string) {
+  // Long hair
+  ctx.fillStyle = "#2d3436";
+  ctx.fillRect(px + 10 * f, py - 4 * f + bob, 28 * f, 10 * f);
+  ctx.fillRect(px + 8 * f, py + 3 * f + bob, 6 * f, 16 * f);
+  ctx.fillRect(px + 34 * f, py + 3 * f + bob, 6 * f, 16 * f);
+  // Bow
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 18 * f, py - 7 * f + bob, 4 * f, 5 * f);
+  ctx.fillRect(px + 14 * f, py - 6 * f + bob, 4 * f, 3 * f);
+  ctx.fillRect(px + 22 * f, py - 6 * f + bob, 4 * f, 3 * f);
+  ctx.fillRect(px + 26 * f, py - 7 * f + bob, 4 * f, 5 * f);
+  // Face
+  ctx.fillStyle = "#f4d7a7";
+  ctx.fillRect(px + 13 * f, py + 4 * f + bob, 22 * f, 15 * f);
+  // Eyes - cute round
+  if (!blink) {
+    ctx.fillStyle = color;
+    ctx.fillRect(px + 16 * f, py + 9 * f + bob, 5 * f, 5 * f);
+    ctx.fillRect(px + 27 * f, py + 9 * f + bob, 5 * f, 5 * f);
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 17 * f, py + 10 * f + bob, 3 * f, 3 * f);
+    ctx.fillRect(px + 28 * f, py + 10 * f + bob, 3 * f, 3 * f);
+    ctx.fillStyle = "#f4f4f4";
+    ctx.fillRect(px + 18 * f, py + 10 * f + bob, 1 * f, 1 * f);
+    ctx.fillRect(px + 29 * f, py + 10 * f + bob, 1 * f, 1 * f);
+  } else {
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 16 * f, py + 12 * f + bob, 5 * f, 1 * f);
+    ctx.fillRect(px + 27 * f, py + 12 * f + bob, 5 * f, 1 * f);
+  }
+  // Blush
+  ctx.fillStyle = "rgba(232,59,59,0.3)";
+  ctx.fillRect(px + 14 * f, py + 14 * f + bob, 4 * f, 2 * f);
+  ctx.fillRect(px + 30 * f, py + 14 * f + bob, 4 * f, 2 * f);
+  // Top
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 12 * f, py + 19 * f + bob, 24 * f, 8 * f);
+  // Arms
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 6 * f, py + 20 * f + bob, 6 * f, 6 * f);
+  ctx.fillRect(px + 36 * f, py + 20 * f + bob, 6 * f, 6 * f);
+  ctx.fillStyle = "#f4d7a7";
+  ctx.fillRect(px + 6 * f, py + 26 * f + bob, 6 * f, 4 * f);
+  ctx.fillRect(px + 36 * f, py + 26 * f + bob, 6 * f, 4 * f);
+  // Skirt
+  ctx.fillStyle = "#f7de1e";
+  ctx.fillRect(px + 10 * f, py + 27 * f + bob, 28 * f, 8 * f);
+  ctx.fillStyle = "#e8c170";
+  ctx.fillRect(px + 10 * f, py + 33 * f + bob, 28 * f, 2 * f);
+  // Legs
+  ctx.fillStyle = "#f4d7a7";
+  ctx.fillRect(px + 14 * f, py + 35 * f + bob, 8 * f, 7 * f);
+  ctx.fillRect(px + 26 * f, py + 35 * f + bob, 8 * f, 7 * f);
+  // Shoes
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 13 * f, py + 42 * f + bob, 10 * f, 4 * f);
+  ctx.fillRect(px + 25 * f, py + 42 * f + bob, 10 * f, 4 * f);
+}
+
+// --- HIKER: Big burly guy with backpack and beard ---
+function drawNPC_Hiker(ctx: CanvasRenderingContext2D, px: number, py: number, f: number, bob: number, blink: boolean, color: string) {
+  // Hat
+  ctx.fillStyle = "#5a3a2b";
+  ctx.fillRect(px + 6 * f, py - 2 * f + bob, 36 * f, 6 * f);
+  ctx.fillRect(px + 12 * f, py - 6 * f + bob, 24 * f, 6 * f);
+  // Face (wider)
+  ctx.fillStyle = "#e8b888";
+  ctx.fillRect(px + 10 * f, py + 3 * f + bob, 28 * f, 17 * f);
+  // Beard
+  ctx.fillStyle = "#5a3a2b";
+  ctx.fillRect(px + 12 * f, py + 14 * f + bob, 24 * f, 6 * f);
+  ctx.fillRect(px + 14 * f, py + 18 * f + bob, 20 * f, 3 * f);
+  // Eyes
+  if (!blink) {
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 16 * f, py + 9 * f + bob, 5 * f, 4 * f);
+    ctx.fillRect(px + 27 * f, py + 9 * f + bob, 5 * f, 4 * f);
+    ctx.fillStyle = "#f4f4f4";
+    ctx.fillRect(px + 17 * f, py + 9 * f + bob, 2 * f, 2 * f);
+    ctx.fillRect(px + 28 * f, py + 9 * f + bob, 2 * f, 2 * f);
+  } else {
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 16 * f, py + 12 * f + bob, 5 * f, 1 * f);
+    ctx.fillRect(px + 27 * f, py + 12 * f + bob, 5 * f, 1 * f);
+  }
+  // Body (thick vest)
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 8 * f, py + 20 * f + bob, 32 * f, 14 * f);
+  // Vest details
+  ctx.fillStyle = "#8b6a4a";
+  ctx.fillRect(px + 22 * f, py + 20 * f + bob, 3 * f, 14 * f);
+  // Backpack
+  ctx.fillStyle = "#6b4a2a";
+  ctx.fillRect(px + 38 * f, py + 18 * f + bob, 8 * f, 16 * f);
+  ctx.fillStyle = "#5a3a1a";
+  ctx.fillRect(px + 39 * f, py + 22 * f + bob, 6 * f, 4 * f);
+  // Arms
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 3 * f, py + 21 * f + bob, 6 * f, 10 * f);
+  ctx.fillStyle = "#e8b888";
+  ctx.fillRect(px + 3 * f, py + 31 * f + bob, 6 * f, 3 * f);
+  // Pants
+  ctx.fillStyle = "#3f3f74";
+  ctx.fillRect(px + 11 * f, py + 34 * f + bob, 12 * f, 8 * f);
+  ctx.fillRect(px + 25 * f, py + 34 * f + bob, 12 * f, 8 * f);
+  // Boots
+  ctx.fillStyle = "#5a3a2b";
+  ctx.fillRect(px + 9 * f, py + 42 * f + bob, 14 * f, 4 * f);
+  ctx.fillRect(px + 25 * f, py + 42 * f + bob, 14 * f, 4 * f);
+}
+
+// --- SWIMMER: Tank top, goggles on forehead ---
+function drawNPC_Swimmer(ctx: CanvasRenderingContext2D, px: number, py: number, f: number, bob: number, blink: boolean, color: string) {
+  // Hair (spiky, wet)
+  ctx.fillStyle = "#2d3436";
+  ctx.fillRect(px + 10 * f, py - 4 * f + bob, 28 * f, 8 * f);
+  ctx.fillRect(px + 8 * f, py - 2 * f + bob, 4 * f, 6 * f);
+  ctx.fillRect(px + 36 * f, py - 2 * f + bob, 4 * f, 6 * f);
+  // Goggles on forehead
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 12 * f, py - 1 * f + bob, 24 * f, 4 * f);
+  ctx.fillStyle = "#87ceeb";
+  ctx.fillRect(px + 14 * f, py + bob, 7 * f, 3 * f);
+  ctx.fillRect(px + 27 * f, py + bob, 7 * f, 3 * f);
+  // Face
+  ctx.fillStyle = "#e8b888";
+  ctx.fillRect(px + 12 * f, py + 4 * f + bob, 24 * f, 16 * f);
+  // Eyes
+  if (!blink) {
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 16 * f, py + 10 * f + bob, 4 * f, 4 * f);
+    ctx.fillRect(px + 28 * f, py + 10 * f + bob, 4 * f, 4 * f);
+    ctx.fillStyle = "#f4f4f4";
+    ctx.fillRect(px + 17 * f, py + 10 * f + bob, 2 * f, 2 * f);
+    ctx.fillRect(px + 29 * f, py + 10 * f + bob, 2 * f, 2 * f);
+  } else {
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 16 * f, py + 13 * f + bob, 4 * f, 1 * f);
+    ctx.fillRect(px + 28 * f, py + 13 * f + bob, 4 * f, 1 * f);
+  }
+  ctx.fillStyle = "#d4a878";
+  ctx.fillRect(px + 20 * f, py + 16 * f + bob, 8 * f, 2 * f);
+  // Tank top
+  ctx.fillStyle = "#f4f4f4";
+  ctx.fillRect(px + 12 * f, py + 20 * f + bob, 24 * f, 10 * f);
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 15 * f, py + 21 * f + bob, 18 * f, 3 * f);
+  // Bare arms
+  ctx.fillStyle = "#e8b888";
+  ctx.fillRect(px + 6 * f, py + 20 * f + bob, 6 * f, 12 * f);
+  ctx.fillRect(px + 36 * f, py + 20 * f + bob, 6 * f, 12 * f);
+  // Swim trunks
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 13 * f, py + 30 * f + bob, 10 * f, 6 * f);
+  ctx.fillRect(px + 25 * f, py + 30 * f + bob, 10 * f, 6 * f);
+  ctx.fillStyle = "#f4f4f4";
+  ctx.fillRect(px + 23 * f, py + 30 * f + bob, 2 * f, 6 * f);
+  // Legs
+  ctx.fillStyle = "#e8b888";
+  ctx.fillRect(px + 14 * f, py + 36 * f + bob, 8 * f, 6 * f);
+  ctx.fillRect(px + 26 * f, py + 36 * f + bob, 8 * f, 6 * f);
+  // Sandals
+  ctx.fillStyle = "#c4a76c";
+  ctx.fillRect(px + 12 * f, py + 42 * f + bob, 10 * f, 4 * f);
+  ctx.fillRect(px + 26 * f, py + 42 * f + bob, 10 * f, 4 * f);
+}
+
+// --- RANGER: Uniform, beret, utility belt ---
+function drawNPC_Ranger(ctx: CanvasRenderingContext2D, px: number, py: number, f: number, bob: number, blink: boolean, color: string) {
+  // Beret
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 8 * f, py - 4 * f + bob, 30 * f, 7 * f);
+  ctx.fillRect(px + 12 * f, py - 7 * f + bob, 22 * f, 5 * f);
+  // Badge on beret
+  ctx.fillStyle = "#f7de1e";
+  ctx.fillRect(px + 20 * f, py - 5 * f + bob, 6 * f, 4 * f);
+  // Face
+  ctx.fillStyle = "#f4d7a7";
+  ctx.fillRect(px + 12 * f, py + 3 * f + bob, 24 * f, 16 * f);
+  // Eyes (serious)
+  if (!blink) {
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 15 * f, py + 9 * f + bob, 6 * f, 3 * f);
+    ctx.fillRect(px + 27 * f, py + 9 * f + bob, 6 * f, 3 * f);
+    ctx.fillStyle = "#f4f4f4";
+    ctx.fillRect(px + 17 * f, py + 9 * f + bob, 2 * f, 2 * f);
+    ctx.fillRect(px + 29 * f, py + 9 * f + bob, 2 * f, 2 * f);
+    // Eyebrows
+    ctx.fillStyle = "#5a3a2b";
+    ctx.fillRect(px + 15 * f, py + 7 * f + bob, 6 * f, 2 * f);
+    ctx.fillRect(px + 27 * f, py + 7 * f + bob, 6 * f, 2 * f);
+  } else {
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 15 * f, py + 11 * f + bob, 6 * f, 1 * f);
+    ctx.fillRect(px + 27 * f, py + 11 * f + bob, 6 * f, 1 * f);
+  }
+  ctx.fillStyle = "#d4b78a";
+  ctx.fillRect(px + 20 * f, py + 15 * f + bob, 8 * f, 2 * f);
+  // Uniform jacket
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 10 * f, py + 19 * f + bob, 28 * f, 12 * f);
+  // Pockets
+  ctx.fillStyle = shadeColor(color, -20);
+  ctx.fillRect(px + 12 * f, py + 24 * f + bob, 8 * f, 5 * f);
+  ctx.fillRect(px + 28 * f, py + 24 * f + bob, 8 * f, 5 * f);
+  // Belt
+  ctx.fillStyle = "#5a3a2b";
+  ctx.fillRect(px + 10 * f, py + 30 * f + bob, 28 * f, 3 * f);
+  ctx.fillStyle = "#f7de1e";
+  ctx.fillRect(px + 22 * f, py + 30 * f + bob, 4 * f, 3 * f);
+  // Arms
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 5 * f, py + 20 * f + bob, 6 * f, 10 * f);
+  ctx.fillRect(px + 37 * f, py + 20 * f + bob, 6 * f, 10 * f);
+  ctx.fillStyle = "#f4d7a7";
+  ctx.fillRect(px + 5 * f, py + 30 * f + bob, 6 * f, 3 * f);
+  ctx.fillRect(px + 37 * f, py + 30 * f + bob, 6 * f, 3 * f);
+  // Pants
+  ctx.fillStyle = "#3f3f74";
+  ctx.fillRect(px + 12 * f, py + 33 * f + bob, 10 * f, 9 * f);
+  ctx.fillRect(px + 26 * f, py + 33 * f + bob, 10 * f, 9 * f);
+  // Boots
+  ctx.fillStyle = "#1a1c2c";
+  ctx.fillRect(px + 11 * f, py + 42 * f + bob, 12 * f, 4 * f);
+  ctx.fillRect(px + 25 * f, py + 42 * f + bob, 12 * f, 4 * f);
+}
+
+// --- RIVAL: Spiky hair, jacket, confident pose ---
+function drawNPC_Rival(ctx: CanvasRenderingContext2D, px: number, py: number, f: number, bob: number, blink: boolean, color: string) {
+  // Spiky hair
+  ctx.fillStyle = "#5a3a2b";
+  ctx.fillRect(px + 10 * f, py - 2 * f + bob, 28 * f, 8 * f);
+  ctx.fillRect(px + 8 * f, py - 6 * f + bob, 8 * f, 6 * f);
+  ctx.fillRect(px + 18 * f, py - 8 * f + bob, 6 * f, 6 * f);
+  ctx.fillRect(px + 30 * f, py - 6 * f + bob, 8 * f, 6 * f);
+  ctx.fillRect(px + 24 * f, py - 10 * f + bob, 5 * f, 5 * f);
+  // Face
+  ctx.fillStyle = "#f4d7a7";
+  ctx.fillRect(px + 12 * f, py + 4 * f + bob, 24 * f, 16 * f);
+  // Smirk eyes
+  if (!blink) {
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 16 * f, py + 10 * f + bob, 4 * f, 4 * f);
+    ctx.fillRect(px + 28 * f, py + 10 * f + bob, 4 * f, 4 * f);
+    ctx.fillStyle = "#e83b3b";
+    ctx.fillRect(px + 17 * f, py + 10 * f + bob, 2 * f, 2 * f);
+    ctx.fillRect(px + 29 * f, py + 10 * f + bob, 2 * f, 2 * f);
+  } else {
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 16 * f, py + 13 * f + bob, 4 * f, 1 * f);
+    ctx.fillRect(px + 28 * f, py + 13 * f + bob, 4 * f, 1 * f);
+  }
+  // Smirk mouth
+  ctx.fillStyle = "#d4b78a";
+  ctx.fillRect(px + 22 * f, py + 16 * f + bob, 8 * f, 2 * f);
+  ctx.fillRect(px + 28 * f, py + 15 * f + bob, 3 * f, 2 * f);
+  // Jacket
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 10 * f, py + 20 * f + bob, 28 * f, 12 * f);
+  // Jacket collar
+  ctx.fillStyle = shadeColor(color, 20);
+  ctx.fillRect(px + 12 * f, py + 20 * f + bob, 6 * f, 4 * f);
+  ctx.fillRect(px + 30 * f, py + 20 * f + bob, 6 * f, 4 * f);
+  // Zipper
+  ctx.fillStyle = "#f7de1e";
+  ctx.fillRect(px + 23 * f, py + 20 * f + bob, 2 * f, 12 * f);
+  // Arms crossed
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 5 * f, py + 22 * f + bob, 6 * f, 8 * f);
+  ctx.fillRect(px + 37 * f, py + 22 * f + bob, 6 * f, 8 * f);
+  ctx.fillStyle = "#f4d7a7";
+  ctx.fillRect(px + 5 * f, py + 30 * f + bob, 6 * f, 3 * f);
+  ctx.fillRect(px + 37 * f, py + 30 * f + bob, 6 * f, 3 * f);
+  // Pants
+  ctx.fillStyle = "#1a1c2c";
+  ctx.fillRect(px + 12 * f, py + 32 * f + bob, 10 * f, 10 * f);
+  ctx.fillRect(px + 26 * f, py + 32 * f + bob, 10 * f, 10 * f);
+  // Shoes
+  ctx.fillStyle = "#e83b3b";
+  ctx.fillRect(px + 11 * f, py + 42 * f + bob, 11 * f, 4 * f);
+  ctx.fillRect(px + 26 * f, py + 42 * f + bob, 11 * f, 4 * f);
+}
+
+// --- Generic fallback NPC ---
+function drawNPC_Generic(ctx: CanvasRenderingContext2D, px: number, py: number, f: number, bob: number, blink: boolean, color: string, skinColor: string, skinShadow: string) {
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 12 * f, py - 3 * f + bob, 24 * f, 8 * f);
+  ctx.fillStyle = skinColor;
+  ctx.fillRect(px + 12 * f, py + 4 * f + bob, 24 * f, 15 * f);
+  if (!blink) {
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 16 * f, py + 10 * f + bob, 4 * f, 4 * f);
+    ctx.fillRect(px + 28 * f, py + 10 * f + bob, 4 * f, 4 * f);
+    ctx.fillStyle = "#f4f4f4";
+    ctx.fillRect(px + 17 * f, py + 10 * f + bob, 2 * f, 2 * f);
+    ctx.fillRect(px + 29 * f, py + 10 * f + bob, 2 * f, 2 * f);
+  } else {
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 16 * f, py + 13 * f + bob, 4 * f, 1 * f);
+    ctx.fillRect(px + 28 * f, py + 13 * f + bob, 4 * f, 1 * f);
+  }
+  ctx.fillStyle = skinShadow;
+  ctx.fillRect(px + 20 * f, py + 16 * f + bob, 8 * f, 2 * f);
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 10 * f, py + 19 * f + bob, 28 * f, 12 * f);
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 5 * f, py + 20 * f + bob, 6 * f, 10 * f);
+  ctx.fillRect(px + 37 * f, py + 20 * f + bob, 6 * f, 10 * f);
+  ctx.fillStyle = skinColor;
+  ctx.fillRect(px + 5 * f, py + 30 * f + bob, 6 * f, 3 * f);
+  ctx.fillRect(px + 37 * f, py + 30 * f + bob, 6 * f, 3 * f);
+  ctx.fillStyle = "#3f3f74";
+  ctx.fillRect(px + 13 * f, py + 31 * f + bob, 10 * f, 10 * f);
+  ctx.fillRect(px + 25 * f, py + 31 * f + bob, 10 * f, 10 * f);
+  ctx.fillStyle = "#1a1c2c";
+  ctx.fillRect(px + 12 * f, py + 42 * f + bob, 11 * f, 4 * f);
+  ctx.fillRect(px + 25 * f, py + 42 * f + bob, 11 * f, 4 * f);
 }
 
 // Draw a tree
