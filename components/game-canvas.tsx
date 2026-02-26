@@ -11,6 +11,7 @@ import {
   drawTree,
   drawFence,
   drawFlowerPatch,
+  TILE,
 } from "@/lib/pixel-renderer";
 import {
   generateMap,
@@ -35,10 +36,10 @@ import {
   INTERIOR_HEIGHT,
   type BuildingInterior,
 } from "@/lib/interior-data";
-import { drawInterior } from "@/lib/interior-renderer";
+import { drawInterior, INTERIOR_TILE } from "@/lib/interior-renderer";
 
-const TILE = 32;
-const MOVE_COOLDOWN = 120;
+// Movement: lower cooldown for smoother held-key walking
+const MOVE_COOLDOWN = 90;
 
 export type GameLocation =
   | { type: "overworld" }
@@ -69,16 +70,16 @@ export default function GameCanvas({
 }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const playerRef = useRef({ x: 15, y: 10, dir: 0, frame: 0, moving: false });
-  // Store overworld position when entering a building
   const overworldPosRef = useRef({ x: 15, y: 10 });
   const keysRef = useRef<Set<string>>(new Set());
   const lastMoveRef = useRef(0);
   const mapRef = useRef<number[][]>([]);
   const animFrameRef = useRef(0);
   const locationRef = useRef<GameLocation>(currentLocation);
+  // Camera position for character-moves-not-world: camera only scrolls when player nears edge
+  const camRef = useRef({ x: 0, y: 0 });
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
 
-  // Keep locationRef in sync
   useEffect(() => {
     locationRef.current = currentLocation;
   }, [currentLocation]);
@@ -111,30 +112,24 @@ export default function GameCanvas({
         const loc = locationRef.current;
 
         if (loc.type === "overworld") {
-          // Check building interaction
           const nearBuilding = getNearbyBuilding(p.x, p.y);
           if (nearBuilding) {
-            // Save overworld position and enter building
             overworldPosRef.current = { x: p.x, y: p.y };
             onBuildingEnter(nearBuilding);
             return;
           }
-          // Check NPC interaction
           const nearNPC = getNearbyNPC(p.x, p.y);
           if (nearNPC) {
             onNPCTalk(nearNPC);
             return;
           }
         } else if (loc.type === "interior") {
-          // Check receptionist interaction
           const interior = buildingInteriors[loc.buildingId];
           if (interior && isNearReceptionist(p.x, p.y, interior.receptionist)) {
             onReceptionistTalk(interior);
             return;
           }
-          // Check exit mat
           if (interior && isOnExitMat(interior.map, p.x, p.y)) {
-            // Exit building
             const restored = overworldPosRef.current;
             playerRef.current.x = restored.x;
             playerRef.current.y = restored.y;
@@ -164,38 +159,19 @@ export default function GameCanvas({
       let nx = p.x;
       let ny = p.y;
       switch (direction) {
-        case "up":
-          p.dir = 1;
-          ny--;
-          break;
-        case "down":
-          p.dir = 0;
-          ny++;
-          break;
-        case "left":
-          p.dir = 2;
-          nx--;
-          break;
-        case "right":
-          p.dir = 3;
-          nx++;
-          break;
+        case "up": p.dir = 1; ny--; break;
+        case "down": p.dir = 0; ny++; break;
+        case "left": p.dir = 2; nx--; break;
+        case "right": p.dir = 3; nx++; break;
       }
-
       if (loc.type === "overworld") {
         if (isWalkable(mapRef.current, nx, ny)) {
-          p.x = nx;
-          p.y = ny;
-          p.frame++;
-          p.moving = true;
+          p.x = nx; p.y = ny; p.frame++; p.moving = true;
         }
       } else if (loc.type === "interior") {
         const interior = buildingInteriors[loc.buildingId];
         if (interior && isInteriorWalkable(interior.map, nx, ny)) {
-          p.x = nx;
-          p.y = ny;
-          p.frame++;
-          p.moving = true;
+          p.x = nx; p.y = ny; p.frame++; p.moving = true;
         }
       }
     },
@@ -209,15 +185,13 @@ export default function GameCanvas({
     };
   }, [handleDPad]);
 
-  // Expose enter building function for parent
   useEffect(() => {
     (window as unknown as Record<string, unknown>).__gameEnterBuilding = (buildingId: string) => {
       const interior = buildingInteriors[buildingId];
       if (!interior) return;
-      // Place player at entrance (above exit mat)
       playerRef.current.x = 4;
       playerRef.current.y = INTERIOR_HEIGHT - 2;
-      playerRef.current.dir = 1; // face up
+      playerRef.current.dir = 1;
       onLocationChange({ type: "interior", buildingId });
     };
     return () => {
@@ -234,6 +208,11 @@ export default function GameCanvas({
 
     let running = true;
 
+    // Initialize camera to center on player
+    const p = playerRef.current;
+    camRef.current.x = p.x * TILE - canvasSize.width / 2 + TILE / 2;
+    camRef.current.y = p.y * TILE - canvasSize.height / 2 + TILE / 2;
+
     function gameLoop() {
       if (!running || !ctx) return;
       const now = Date.now();
@@ -242,17 +221,11 @@ export default function GameCanvas({
 
       if (loc.type === "overworld") {
         const map = mapRef.current;
-        if (!map.length) {
-          requestAnimationFrame(gameLoop);
-          return;
-        }
+        if (!map.length) { requestAnimationFrame(gameLoop); return; }
         renderOverworld(ctx, p, map, now);
       } else if (loc.type === "interior") {
         const interior = buildingInteriors[loc.buildingId];
-        if (!interior) {
-          requestAnimationFrame(gameLoop);
-          return;
-        }
+        if (!interior) { requestAnimationFrame(gameLoop); return; }
         renderInterior(ctx, p, interior, now);
       }
 
@@ -266,7 +239,7 @@ export default function GameCanvas({
       map: number[][],
       now: number
     ) {
-      // Process movement
+      // Process held-key movement
       let movedThisFrame = false;
       if (!isPaused && now - lastMoveRef.current > MOVE_COOLDOWN) {
         let moved = false;
@@ -302,16 +275,38 @@ export default function GameCanvas({
 
       p.moving = anyKeyHeld || movedThisFrame;
 
-      // Check proximity
       const nearBuilding = getNearbyBuilding(p.x, p.y);
       onNearBuilding(nearBuilding);
-
       const nearNPC = getNearbyNPC(p.x, p.y);
       if (!nearNPC) onNPCLeave();
 
-      // Camera
-      const camX = p.x * TILE - canvasSize.width / 2 + TILE / 2;
-      const camY = p.y * TILE - canvasSize.height / 2 + TILE / 2;
+      // --- Edge-scroll camera: player moves on screen, camera only scrolls at edges ---
+      const edgeMargin = TILE * 4; // tiles of margin before camera scrolls
+      const playerScreenX = p.x * TILE - camRef.current.x;
+      const playerScreenY = p.y * TILE - camRef.current.y;
+
+      // Scroll camera when player approaches edge
+      if (playerScreenX < edgeMargin) {
+        camRef.current.x = p.x * TILE - edgeMargin;
+      }
+      if (playerScreenX + TILE > canvasSize.width - edgeMargin) {
+        camRef.current.x = p.x * TILE + TILE - canvasSize.width + edgeMargin;
+      }
+      if (playerScreenY < edgeMargin) {
+        camRef.current.y = p.y * TILE - edgeMargin;
+      }
+      if (playerScreenY + TILE > canvasSize.height - edgeMargin) {
+        camRef.current.y = p.y * TILE + TILE - canvasSize.height + edgeMargin;
+      }
+
+      // Clamp camera to world bounds
+      const maxCamX = MAP_WIDTH * TILE - canvasSize.width;
+      const maxCamY = MAP_HEIGHT * TILE - canvasSize.height;
+      camRef.current.x = Math.max(0, Math.min(camRef.current.x, maxCamX));
+      camRef.current.y = Math.max(0, Math.min(camRef.current.y, maxCamY));
+
+      const camX = camRef.current.x;
+      const camY = camRef.current.y;
 
       ctx.fillStyle = "#1a1c2c";
       ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
@@ -368,7 +363,6 @@ export default function GameCanvas({
       interior: BuildingInterior,
       now: number
     ) {
-      // Process movement
       let movedThisFrame = false;
       if (!isPaused && now - lastMoveRef.current > MOVE_COOLDOWN) {
         let moved = false;
@@ -390,7 +384,6 @@ export default function GameCanvas({
           lastMoveRef.current = now;
           movedThisFrame = true;
 
-          // Auto-exit if stepping on exit mat
           if (isOnExitMat(interior.map, nx, ny)) {
             const restored = overworldPosRef.current;
             playerRef.current.x = restored.x;
@@ -414,30 +407,19 @@ export default function GameCanvas({
 
       p.moving = anyKeyHeld || movedThisFrame;
 
-      // Camera centered on interior
-      const interiorPixelW = INTERIOR_WIDTH * TILE;
-      const interiorPixelH = INTERIOR_HEIGHT * TILE;
+      // Center the interior on screen
+      const interiorPixelW = INTERIOR_WIDTH * INTERIOR_TILE;
+      const interiorPixelH = INTERIOR_HEIGHT * INTERIOR_TILE;
       const camX = interiorPixelW / 2 - canvasSize.width / 2;
       const camY = interiorPixelH / 2 - canvasSize.height / 2;
 
-      // Dark background
       ctx.fillStyle = "#0d0d1a";
       ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
 
-      // Draw interior scene
       drawInterior(ctx, interior, camX, camY, animFrameRef.current, p.x, p.y);
 
-      // Draw player
-      drawPlayer(ctx, p.x, p.y, camX, camY, p.dir, p.frame, p.moving);
-
-      // Location label
-      ctx.fillStyle = "rgba(26,28,44,0.85)";
-      ctx.fillRect(canvasSize.width / 2 - 80, 8, 160, 22);
-      ctx.fillStyle = "#e8c170";
-      ctx.font = "bold 10px monospace";
-      ctx.textAlign = "center";
-      const bldg = buildings.find(b => b.id === interior.buildingId);
-      ctx.fillText(bldg?.signText ?? interior.buildingId.toUpperCase(), canvasSize.width / 2, 23);
+      // Draw player inside interior using INTERIOR_TILE
+      drawPlayerInterior(ctx, p.x, p.y, camX, camY, p.dir, p.frame, p.moving);
     }
 
     requestAnimationFrame(gameLoop);
@@ -455,6 +437,181 @@ export default function GameCanvas({
   );
 }
 
+// Interior player draw uses INTERIOR_TILE for positioning
+function drawPlayerInterior(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  camX: number,
+  camY: number,
+  direction: number,
+  frame: number,
+  isMoving: boolean
+) {
+  // Use INTERIOR_TILE for position, but draw the sprite at same visual size
+  const px = x * INTERIOR_TILE - camX;
+  const py = y * INTERIOR_TILE - camY;
+
+  const walkFrame = isMoving ? frame % 4 : 0;
+  const s = INTERIOR_TILE; // scale factor
+  const f = s / 48; // normalize to 48 (the interior tile size)
+
+  // Shadow
+  ctx.fillStyle = "rgba(0,0,0,0.25)";
+  ctx.beginPath();
+  ctx.ellipse(px + s / 2, py + s - 2 * f, 12 * f, 4 * f, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Delegate to the same visual structure but scaled for interior tiles
+  drawPlayerScaled(ctx, px, py, f, direction, walkFrame, isMoving);
+}
+
+function drawPlayerScaled(
+  ctx: CanvasRenderingContext2D,
+  px: number,
+  py: number,
+  f: number,
+  direction: number,
+  walkFrame: number,
+  isMoving: boolean
+) {
+  const legSwing = isMoving ? (walkFrame === 1 ? 4 * f : walkFrame === 3 ? -4 * f : 0) : 0;
+  const armSwing = isMoving ? (walkFrame === 1 ? -3 * f : walkFrame === 3 ? 3 * f : 0) : 0;
+  const bounce = isMoving ? (walkFrame === 1 || walkFrame === 3 ? -1 * f : 0) : 0;
+
+  if (direction === 0) {
+    // FACING DOWN
+    ctx.fillStyle = "#e83b3b";
+    ctx.fillRect(px + 6 * f, py - 3 * f + bounce, 28 * f, 7 * f);
+    ctx.fillStyle = "#f4f4f4";
+    ctx.fillRect(px + 6 * f, py + 3 * f + bounce, 28 * f, 3 * f);
+    ctx.fillStyle = "#2d3436";
+    ctx.fillRect(px + 8 * f, py + 1 * f + bounce, 24 * f, 5 * f);
+    ctx.fillStyle = "#f4d7a7";
+    ctx.fillRect(px + 10 * f, py + 4 * f + bounce, 20 * f, 15 * f);
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 14 * f, py + 10 * f + bounce, 4 * f, 4 * f);
+    ctx.fillRect(px + 23 * f, py + 10 * f + bounce, 4 * f, 4 * f);
+    ctx.fillStyle = "#f4f4f4";
+    ctx.fillRect(px + 15 * f, py + 10 * f + bounce, 2 * f, 2 * f);
+    ctx.fillRect(px + 24 * f, py + 10 * f + bounce, 2 * f, 2 * f);
+    ctx.fillStyle = "#c4956a";
+    ctx.fillRect(px + 18 * f, py + 16 * f + bounce, 5 * f, 2 * f);
+    ctx.fillStyle = "#e83b3b";
+    ctx.fillRect(px + 10 * f, py + 19 * f + bounce, 20 * f, 10 * f);
+    ctx.fillStyle = "#c62d2d";
+    ctx.fillRect(px + 19 * f, py + 19 * f + bounce, 3 * f, 10 * f);
+    ctx.fillStyle = "#e83b3b";
+    ctx.fillRect(px + 5 * f, py + 20 * f + bounce + armSwing, 5 * f, 8 * f);
+    ctx.fillRect(px + 30 * f, py + 20 * f + bounce - armSwing, 5 * f, 8 * f);
+    ctx.fillStyle = "#f4d7a7";
+    ctx.fillRect(px + 5 * f, py + 28 * f + bounce + armSwing, 5 * f, 3 * f);
+    ctx.fillRect(px + 30 * f, py + 28 * f + bounce - armSwing, 5 * f, 3 * f);
+    ctx.fillStyle = "#3f3f74";
+    ctx.fillRect(px + 11 * f, py + 29 * f + bounce, 8 * f, 8 * f + legSwing);
+    ctx.fillRect(px + 21 * f, py + 29 * f + bounce, 8 * f, 8 * f - legSwing);
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 10 * f, py + 36 * f + bounce + Math.max(0, legSwing), 9 * f, 4 * f);
+    ctx.fillRect(px + 21 * f, py + 36 * f + bounce + Math.max(0, -legSwing), 9 * f, 4 * f);
+  } else if (direction === 1) {
+    // FACING UP
+    ctx.fillStyle = "#e83b3b";
+    ctx.fillRect(px + 6 * f, py - 3 * f + bounce, 28 * f, 7 * f);
+    ctx.fillStyle = "#c62d2d";
+    ctx.fillRect(px + 15 * f, py + 3 * f + bounce, 10 * f, 3 * f);
+    ctx.fillStyle = "#2d3436";
+    ctx.fillRect(px + 8 * f, py + 1 * f + bounce, 24 * f, 18 * f);
+    ctx.fillStyle = "#f4d7a7";
+    ctx.fillRect(px + 7 * f, py + 9 * f + bounce, 3 * f, 5 * f);
+    ctx.fillRect(px + 30 * f, py + 9 * f + bounce, 3 * f, 5 * f);
+    ctx.fillStyle = "#e83b3b";
+    ctx.fillRect(px + 10 * f, py + 19 * f + bounce, 20 * f, 10 * f);
+    ctx.fillStyle = "#c62d2d";
+    ctx.fillRect(px + 13 * f, py + 19 * f + bounce, 3 * f, 10 * f);
+    ctx.fillRect(px + 25 * f, py + 19 * f + bounce, 3 * f, 10 * f);
+    ctx.fillStyle = "#e83b3b";
+    ctx.fillRect(px + 5 * f, py + 20 * f + bounce + armSwing, 5 * f, 8 * f);
+    ctx.fillRect(px + 30 * f, py + 20 * f + bounce - armSwing, 5 * f, 8 * f);
+    ctx.fillStyle = "#f4d7a7";
+    ctx.fillRect(px + 5 * f, py + 28 * f + bounce + armSwing, 5 * f, 3 * f);
+    ctx.fillRect(px + 30 * f, py + 28 * f + bounce - armSwing, 5 * f, 3 * f);
+    ctx.fillStyle = "#3f3f74";
+    ctx.fillRect(px + 11 * f, py + 29 * f + bounce, 8 * f, 8 * f + legSwing);
+    ctx.fillRect(px + 21 * f, py + 29 * f + bounce, 8 * f, 8 * f - legSwing);
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 10 * f, py + 36 * f + bounce + Math.max(0, legSwing), 9 * f, 4 * f);
+    ctx.fillRect(px + 21 * f, py + 36 * f + bounce + Math.max(0, -legSwing), 9 * f, 4 * f);
+  } else if (direction === 2) {
+    // FACING LEFT
+    const la = isMoving ? (walkFrame === 1 ? 4 * f : walkFrame === 3 ? -4 * f : 0) : 0;
+    const aa = isMoving ? (walkFrame === 1 ? 4 * f : walkFrame === 3 ? -4 * f : 0) : 0;
+    ctx.fillStyle = "#e83b3b";
+    ctx.fillRect(px + 2 * f, py - 3 * f + bounce, 26 * f, 7 * f);
+    ctx.fillStyle = "#f4f4f4";
+    ctx.fillRect(px + 2 * f, py + 3 * f + bounce, 13 * f, 3 * f);
+    ctx.fillStyle = "#2d3436";
+    ctx.fillRect(px + 10 * f, py + 1 * f + bounce, 18 * f, 7 * f);
+    ctx.fillStyle = "#f4d7a7";
+    ctx.fillRect(px + 11 * f, py + 4 * f + bounce, 17 * f, 15 * f);
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 13 * f, py + 10 * f + bounce, 4 * f, 4 * f);
+    ctx.fillStyle = "#f4f4f4";
+    ctx.fillRect(px + 13 * f, py + 10 * f + bounce, 2 * f, 2 * f);
+    ctx.fillStyle = "#d4b78a";
+    ctx.fillRect(px + 9 * f, py + 13 * f + bounce, 3 * f, 3 * f);
+    ctx.fillStyle = "#e83b3b";
+    ctx.fillRect(px + 12 * f, py + 19 * f + bounce, 16 * f, 10 * f);
+    ctx.fillStyle = "#e83b3b";
+    ctx.fillRect(px + 8 * f, py + 20 * f + bounce - aa, 5 * f, 8 * f);
+    ctx.fillStyle = "#f4d7a7";
+    ctx.fillRect(px + 8 * f, py + 28 * f + bounce - aa, 5 * f, 3 * f);
+    ctx.fillStyle = "#c62d2d";
+    ctx.fillRect(px + 27 * f, py + 20 * f + bounce + aa, 4 * f, 7 * f);
+    ctx.fillStyle = "#3f3f74";
+    ctx.fillRect(px + 12 * f - la, py + 29 * f + bounce, 7 * f, 8 * f);
+    ctx.fillStyle = "#2d2d5c";
+    ctx.fillRect(px + 21 * f + la, py + 29 * f + bounce, 7 * f, 8 * f);
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 10 * f - la, py + 36 * f + bounce, 9 * f, 4 * f);
+    ctx.fillStyle = "#0d0d1a";
+    ctx.fillRect(px + 20 * f + la, py + 36 * f + bounce, 8 * f, 4 * f);
+  } else {
+    // FACING RIGHT
+    const la = isMoving ? (walkFrame === 1 ? 4 * f : walkFrame === 3 ? -4 * f : 0) : 0;
+    const aa = isMoving ? (walkFrame === 1 ? 4 * f : walkFrame === 3 ? -4 * f : 0) : 0;
+    ctx.fillStyle = "#e83b3b";
+    ctx.fillRect(px + 12 * f, py - 3 * f + bounce, 26 * f, 7 * f);
+    ctx.fillStyle = "#f4f4f4";
+    ctx.fillRect(px + 25 * f, py + 3 * f + bounce, 13 * f, 3 * f);
+    ctx.fillStyle = "#2d3436";
+    ctx.fillRect(px + 12 * f, py + 1 * f + bounce, 18 * f, 7 * f);
+    ctx.fillStyle = "#f4d7a7";
+    ctx.fillRect(px + 12 * f, py + 4 * f + bounce, 17 * f, 15 * f);
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 24 * f, py + 10 * f + bounce, 4 * f, 4 * f);
+    ctx.fillStyle = "#f4f4f4";
+    ctx.fillRect(px + 26 * f, py + 10 * f + bounce, 2 * f, 2 * f);
+    ctx.fillStyle = "#d4b78a";
+    ctx.fillRect(px + 28 * f, py + 13 * f + bounce, 3 * f, 3 * f);
+    ctx.fillStyle = "#e83b3b";
+    ctx.fillRect(px + 12 * f, py + 19 * f + bounce, 16 * f, 10 * f);
+    ctx.fillStyle = "#e83b3b";
+    ctx.fillRect(px + 27 * f, py + 20 * f + bounce - aa, 5 * f, 8 * f);
+    ctx.fillStyle = "#f4d7a7";
+    ctx.fillRect(px + 27 * f, py + 28 * f + bounce - aa, 5 * f, 3 * f);
+    ctx.fillStyle = "#c62d2d";
+    ctx.fillRect(px + 9 * f, py + 20 * f + bounce + aa, 4 * f, 7 * f);
+    ctx.fillStyle = "#3f3f74";
+    ctx.fillRect(px + 21 * f + la, py + 29 * f + bounce, 7 * f, 8 * f);
+    ctx.fillStyle = "#2d2d5c";
+    ctx.fillRect(px + 12 * f - la, py + 29 * f + bounce, 7 * f, 8 * f);
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 21 * f + la, py + 36 * f + bounce, 9 * f, 4 * f);
+    ctx.fillStyle = "#0d0d1a";
+    ctx.fillRect(px + 12 * f - la, py + 36 * f + bounce, 8 * f, 4 * f);
+  }
+}
+
 function drawWater(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -465,15 +622,15 @@ function drawWater(
 ) {
   const px = x * TILE - camX;
   const py = y * TILE - camY;
-  const wave = Math.sin(frame * 0.04 + x * 0.5 + y * 0.3) * 2;
+  const wave = Math.sin(frame * 0.04 + x * 0.5 + y * 0.3) * 3;
 
   ctx.fillStyle = "#3b7dd8";
   ctx.fillRect(px, py, TILE, TILE);
   ctx.fillStyle = "#5b9de8";
-  ctx.fillRect(px + 4, py + 8 + wave, 24, 4);
-  ctx.fillRect(px + 8, py + 20 - wave, 20, 3);
+  ctx.fillRect(px + 6, py + 12 + wave, TILE * 0.6, 5);
+  ctx.fillRect(px + 10, py + 28 - wave, TILE * 0.5, 4);
   if ((x + y + Math.floor(frame / 30)) % 7 === 0) {
     ctx.fillStyle = "#aad4ff";
-    ctx.fillRect(px + 12, py + 12 + wave, 3, 3);
+    ctx.fillRect(px + 18, py + 18 + wave, 4, 4);
   }
 }

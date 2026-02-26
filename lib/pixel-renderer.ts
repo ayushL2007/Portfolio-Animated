@@ -1,6 +1,6 @@
 import { Building, NPC } from "./game-data";
 
-const TILE = 32;
+export const TILE = 48;
 
 // Draw a pixel-art grass tile
 export function drawGrass(
@@ -19,33 +19,33 @@ export function drawGrass(
   const seed = (x * 7 + y * 13) % 5;
   ctx.fillStyle = "#5a9c6a";
   if (seed === 0) {
-    ctx.fillRect(px + 4, py + 6, 2, 4);
-    ctx.fillRect(px + 20, py + 18, 2, 4);
-    ctx.fillRect(px + 12, py + 24, 2, 3);
+    ctx.fillRect(px + 6, py + 9, 3, 6);
+    ctx.fillRect(px + 30, py + 27, 3, 6);
+    ctx.fillRect(px + 18, py + 36, 3, 5);
   } else if (seed === 1) {
-    ctx.fillRect(px + 8, py + 10, 2, 3);
-    ctx.fillRect(px + 24, py + 8, 2, 4);
+    ctx.fillRect(px + 12, py + 15, 3, 5);
+    ctx.fillRect(px + 36, py + 12, 3, 6);
   } else if (seed === 2) {
-    ctx.fillRect(px + 16, py + 4, 2, 4);
-    ctx.fillRect(px + 6, py + 22, 2, 3);
-    ctx.fillRect(px + 26, py + 26, 2, 3);
+    ctx.fillRect(px + 24, py + 6, 3, 6);
+    ctx.fillRect(px + 9, py + 33, 3, 5);
+    ctx.fillRect(px + 39, py + 39, 3, 5);
   } else if (seed === 3) {
-    ctx.fillRect(px + 2, py + 14, 2, 4);
-    ctx.fillRect(px + 18, py + 2, 2, 3);
+    ctx.fillRect(px + 3, py + 21, 3, 6);
+    ctx.fillRect(px + 27, py + 3, 3, 5);
   } else {
-    ctx.fillRect(px + 10, py + 16, 2, 3);
-    ctx.fillRect(px + 28, py + 12, 2, 4);
-    ctx.fillRect(px + 14, py + 28, 2, 2);
+    ctx.fillRect(px + 15, py + 24, 3, 5);
+    ctx.fillRect(px + 42, py + 18, 3, 6);
+    ctx.fillRect(px + 21, py + 42, 3, 3);
   }
 
   if ((x * 3 + y * 11) % 17 === 0) {
     ctx.fillStyle = "#e8c170";
-    ctx.fillRect(px + 14, py + 14, 4, 4);
+    ctx.fillRect(px + 21, py + 21, 6, 6);
     ctx.fillStyle = "#e83b3b";
-    ctx.fillRect(px + 12, py + 14, 2, 2);
-    ctx.fillRect(px + 18, py + 14, 2, 2);
-    ctx.fillRect(px + 14, py + 12, 2, 2);
-    ctx.fillRect(px + 14, py + 18, 2, 2);
+    ctx.fillRect(px + 18, py + 21, 3, 3);
+    ctx.fillRect(px + 27, py + 21, 3, 3);
+    ctx.fillRect(px + 21, py + 18, 3, 3);
+    ctx.fillRect(px + 21, py + 27, 3, 3);
   }
 
   ctx.fillStyle = "rgba(0,0,0,0.05)";
@@ -64,22 +64,20 @@ export function drawFlowerPatch(
   const px = x * TILE - camX;
   const py = y * TILE - camY;
 
-  // Base grass
   ctx.fillStyle = "#4a7c59";
   ctx.fillRect(px, py, TILE, TILE);
   ctx.fillStyle = "#5a9c6a";
-  ctx.fillRect(px + 2, py + 2, TILE - 4, TILE - 4);
+  ctx.fillRect(px + 3, py + 3, TILE - 6, TILE - 6);
 
-  // Flowers
   const colors = ["#e83b3b", "#e8c170", "#5b6ee1", "#f4f4f4", "#f89720"];
   const seed = x * 3 + y * 7;
-  for (let i = 0; i < 4; i++) {
-    const fx = px + 4 + ((seed + i * 7) % 20);
-    const fy = py + 4 + (((seed + i * 11) % 20));
+  for (let i = 0; i < 5; i++) {
+    const fx = px + 6 + ((seed + i * 7) % 30);
+    const fy = py + 6 + (((seed + i * 11) % 30));
     ctx.fillStyle = colors[(seed + i) % colors.length];
-    ctx.fillRect(fx, fy, 4, 4);
+    ctx.fillRect(fx, fy, 6, 6);
     ctx.fillStyle = "#e8c170";
-    ctx.fillRect(fx + 1, fy + 1, 2, 2);
+    ctx.fillRect(fx + 2, fy + 2, 2, 2);
   }
 }
 
@@ -100,15 +98,15 @@ export function drawPath(
   ctx.fillStyle = "#b89a5c";
   const seed = (x * 11 + y * 7) % 4;
   if (seed === 0) {
-    ctx.fillRect(px + 4, py + 8, 3, 2);
-    ctx.fillRect(px + 20, py + 22, 4, 2);
+    ctx.fillRect(px + 6, py + 12, 5, 3);
+    ctx.fillRect(px + 30, py + 33, 6, 3);
   } else if (seed === 1) {
-    ctx.fillRect(px + 12, py + 4, 2, 3);
-    ctx.fillRect(px + 24, py + 16, 3, 2);
+    ctx.fillRect(px + 18, py + 6, 3, 5);
+    ctx.fillRect(px + 36, py + 24, 5, 3);
   } else if (seed === 2) {
-    ctx.fillRect(px + 8, py + 20, 3, 2);
+    ctx.fillRect(px + 12, py + 30, 5, 3);
   } else {
-    ctx.fillRect(px + 16, py + 12, 4, 2);
+    ctx.fillRect(px + 24, py + 18, 6, 3);
   }
 
   ctx.fillStyle = "#a88c4c";
@@ -129,45 +127,37 @@ export function drawBuilding(
   const bw = building.width * TILE;
   const bh = building.height * TILE;
 
-  // Building shadow
   ctx.fillStyle = "rgba(0,0,0,0.2)";
-  ctx.fillRect(bx + 6, by + 6, bw, bh);
+  ctx.fillRect(bx + 8, by + 8, bw, bh);
 
-  // Main building body
   ctx.fillStyle = building.color;
   ctx.fillRect(bx, by, bw, bh);
 
-  // Building border
   ctx.strokeStyle = "rgba(0,0,0,0.4)";
   ctx.lineWidth = 2;
   ctx.strokeRect(bx + 1, by + 1, bw - 2, bh - 2);
 
-  // Roof
   const roofHeight = TILE * 1.5;
   ctx.fillStyle = building.roofColor;
-  ctx.fillRect(bx - 4, by - roofHeight, bw + 8, roofHeight);
+  ctx.fillRect(bx - 6, by - roofHeight, bw + 12, roofHeight);
   ctx.fillStyle = shadeColor(building.roofColor, -20);
-  ctx.fillRect(bx - 4, by - roofHeight, bw + 8, 4);
-  ctx.fillRect(bx - 4, by - 4, bw + 8, 4);
+  ctx.fillRect(bx - 6, by - roofHeight, bw + 12, 5);
+  ctx.fillRect(bx - 6, by - 5, bw + 12, 5);
 
-  // Windows
   ctx.fillStyle = isNearby ? "#ffffaa" : "#87ceeb";
-  const windowSize = 10;
+  const windowSize = 14;
   const windowY = by + TILE * 0.8;
   ctx.fillRect(bx + TILE * 0.6, windowY, windowSize, windowSize);
   ctx.fillRect(bx + bw - TILE * 0.6 - windowSize, windowY, windowSize, windowSize);
-  // Extra center window for wider buildings
   if (building.width >= 6) {
     ctx.fillRect(bx + bw / 2 - windowSize / 2, windowY, windowSize, windowSize);
   }
-  // Window frames
   ctx.fillStyle = "rgba(0,0,0,0.3)";
   ctx.fillRect(bx + TILE * 0.6 + windowSize / 2 - 1, windowY, 2, windowSize);
   ctx.fillRect(bx + TILE * 0.6, windowY + windowSize / 2 - 1, windowSize, 2);
   ctx.fillRect(bx + bw - TILE * 0.6 - windowSize + windowSize / 2 - 1, windowY, 2, windowSize);
   ctx.fillRect(bx + bw - TILE * 0.6 - windowSize, windowY + windowSize / 2 - 1, windowSize, 2);
 
-  // Door
   const doorW = TILE * 0.8;
   const doorH = TILE * 1.2;
   const doorX = bx + bw / 2 - doorW / 2;
@@ -175,40 +165,37 @@ export function drawBuilding(
   ctx.fillStyle = building.doorColor;
   ctx.fillRect(doorX, doorY, doorW, doorH);
   ctx.fillStyle = "#2d3436";
-  ctx.fillRect(doorX + doorW - 8, doorY + doorH / 2, 4, 4);
+  ctx.fillRect(doorX + doorW - 10, doorY + doorH / 2, 5, 5);
   ctx.strokeStyle = "rgba(0,0,0,0.3)";
   ctx.lineWidth = 2;
   ctx.strokeRect(doorX, doorY, doorW, doorH);
 
-  // Sign
-  const signW = Math.max(100, building.signText.length * 7 + 20);
+  const signW = Math.max(120, building.signText.length * 8 + 24);
   ctx.fillStyle = "#e8c170";
-  ctx.fillRect(bx + bw / 2 - signW / 2 - 2, by - roofHeight - 26, signW + 4, 24);
+  ctx.fillRect(bx + bw / 2 - signW / 2 - 2, by - roofHeight - 30, signW + 4, 28);
   ctx.fillStyle = "#1a1c2c";
-  ctx.fillRect(bx + bw / 2 - signW / 2, by - roofHeight - 24, signW, 20);
+  ctx.fillRect(bx + bw / 2 - signW / 2, by - roofHeight - 28, signW, 24);
 
   ctx.fillStyle = "#e8c170";
-  ctx.font = "bold 9px monospace";
+  ctx.font = "bold 11px monospace";
   ctx.textAlign = "center";
-  ctx.fillText(building.signText, bx + bw / 2, by - roofHeight - 10);
+  ctx.fillText(building.signText, bx + bw / 2, by - roofHeight - 12);
 
-  // Glow when nearby
   if (isNearby) {
     ctx.strokeStyle = "#e8c170";
     ctx.lineWidth = 2;
-    ctx.setLineDash([4, 4]);
-    ctx.strokeRect(bx - 4, by - roofHeight - 28, bw + 8, bh + roofHeight + 32);
+    ctx.setLineDash([5, 5]);
+    ctx.strokeRect(bx - 6, by - roofHeight - 32, bw + 12, bh + roofHeight + 38);
     ctx.setLineDash([]);
 
     ctx.fillStyle = "#e8c170";
-    ctx.font = "bold 11px monospace";
+    ctx.font = "bold 13px monospace";
     ctx.textAlign = "center";
-    ctx.fillText("[ SPACE / ENTER ]", bx + bw / 2, by + bh + 18);
+    ctx.fillText("[ SPACE / ENTER ]", bx + bw / 2, by + bh + 24);
   }
 }
 
-// Draw the player character with proper directional walk animation
-// direction: 0=down, 1=up, 2=left, 3=right
+// Draw the player character
 export function drawPlayer(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -221,258 +208,172 @@ export function drawPlayer(
 ) {
   const px = x * TILE - camX;
   const py = y * TILE - camY;
-
-  // Walk cycle: 4 frames (0 = stand, 1 = step left, 2 = stand, 3 = step right)
   const walkFrame = isMoving ? frame % 4 : 0;
+  const f = TILE / 32; // scale factor from original 32px base
 
-  // Shadow
   ctx.fillStyle = "rgba(0,0,0,0.25)";
   ctx.beginPath();
-  ctx.ellipse(px + 16, py + 31, 9, 3, 0, 0, Math.PI * 2);
+  ctx.ellipse(px + TILE / 2, py + TILE - 2, 12 * f, 4 * f, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  if (direction === 0) {
-    // === FACING DOWN (front view) ===
-    drawPlayerDown(ctx, px, py, walkFrame, isMoving);
-  } else if (direction === 1) {
-    // === FACING UP (back view) ===
-    drawPlayerUp(ctx, px, py, walkFrame, isMoving);
-  } else if (direction === 2) {
-    // === FACING LEFT ===
-    drawPlayerLeft(ctx, px, py, walkFrame, isMoving);
-  } else {
-    // === FACING RIGHT ===
-    drawPlayerRight(ctx, px, py, walkFrame, isMoving);
-  }
+  if (direction === 0) drawPlayerDown(ctx, px, py, walkFrame, isMoving, f);
+  else if (direction === 1) drawPlayerUp(ctx, px, py, walkFrame, isMoving, f);
+  else if (direction === 2) drawPlayerLeft(ctx, px, py, walkFrame, isMoving, f);
+  else drawPlayerRight(ctx, px, py, walkFrame, isMoving, f);
 }
 
-function drawPlayerDown(ctx: CanvasRenderingContext2D, px: number, py: number, walkFrame: number, isMoving: boolean) {
-  const legSwing = isMoving ? (walkFrame === 1 ? 3 : walkFrame === 3 ? -3 : 0) : 0;
-  const armSwing = isMoving ? (walkFrame === 1 ? -2 : walkFrame === 3 ? 2 : 0) : 0;
-  const bounce = isMoving ? (walkFrame === 1 || walkFrame === 3 ? -1 : 0) : 0;
+function drawPlayerDown(ctx: CanvasRenderingContext2D, px: number, py: number, walkFrame: number, isMoving: boolean, f: number) {
+  const legSwing = isMoving ? (walkFrame === 1 ? 4 * f : walkFrame === 3 ? -4 * f : 0) : 0;
+  const armSwing = isMoving ? (walkFrame === 1 ? -3 * f : walkFrame === 3 ? 3 * f : 0) : 0;
+  const bounce = isMoving ? (walkFrame === 1 || walkFrame === 3 ? -2 * f : 0) : 0;
 
-  // Hat
   ctx.fillStyle = "#e83b3b";
-  ctx.fillRect(px + 5, py - 2 + bounce, 22, 5);
+  ctx.fillRect(px + 5 * f, py - 2 * f + bounce, 22 * f, 5 * f);
   ctx.fillStyle = "#f4f4f4";
-  ctx.fillRect(px + 5, py + 2 + bounce, 22, 2);
-
-  // Hair
+  ctx.fillRect(px + 5 * f, py + 2 * f + bounce, 22 * f, 2 * f);
   ctx.fillStyle = "#2d3436";
-  ctx.fillRect(px + 7, py + 1 + bounce, 18, 4);
-  ctx.fillRect(px + 6, py + 2 + bounce, 2, 4);
-  ctx.fillRect(px + 24, py + 2 + bounce, 2, 4);
-
-  // Head (skin)
+  ctx.fillRect(px + 7 * f, py + 1 * f + bounce, 18 * f, 4 * f);
+  ctx.fillRect(px + 6 * f, py + 2 * f + bounce, 2 * f, 4 * f);
+  ctx.fillRect(px + 24 * f, py + 2 * f + bounce, 2 * f, 4 * f);
   ctx.fillStyle = "#f4d7a7";
-  ctx.fillRect(px + 8, py + 3 + bounce, 16, 12);
-
-  // Eyes
+  ctx.fillRect(px + 8 * f, py + 3 * f + bounce, 16 * f, 12 * f);
   ctx.fillStyle = "#1a1c2c";
-  ctx.fillRect(px + 11, py + 8 + bounce, 3, 3);
-  ctx.fillRect(px + 18, py + 8 + bounce, 3, 3);
-  // Eye highlight
+  ctx.fillRect(px + 11 * f, py + 8 * f + bounce, 3 * f, 3 * f);
+  ctx.fillRect(px + 18 * f, py + 8 * f + bounce, 3 * f, 3 * f);
   ctx.fillStyle = "#f4f4f4";
-  ctx.fillRect(px + 12, py + 8 + bounce, 1, 1);
-  ctx.fillRect(px + 19, py + 8 + bounce, 1, 1);
-
-  // Mouth
+  ctx.fillRect(px + 12 * f, py + 8 * f + bounce, 1 * f, 1 * f);
+  ctx.fillRect(px + 19 * f, py + 8 * f + bounce, 1 * f, 1 * f);
   ctx.fillStyle = "#c4956a";
-  ctx.fillRect(px + 14, py + 12 + bounce, 4, 1);
-
-  // Body (red shirt)
+  ctx.fillRect(px + 14 * f, py + 12 * f + bounce, 4 * f, 1 * f);
   ctx.fillStyle = "#e83b3b";
-  ctx.fillRect(px + 8, py + 15 + bounce, 16, 8);
-  // Shirt detail
+  ctx.fillRect(px + 8 * f, py + 15 * f + bounce, 16 * f, 8 * f);
   ctx.fillStyle = "#c62d2d";
-  ctx.fillRect(px + 15, py + 15 + bounce, 2, 8);
-
-  // Arms
+  ctx.fillRect(px + 15 * f, py + 15 * f + bounce, 2 * f, 8 * f);
   ctx.fillStyle = "#e83b3b";
-  ctx.fillRect(px + 4, py + 16 + bounce + armSwing, 4, 6);
-  ctx.fillRect(px + 24, py + 16 + bounce - armSwing, 4, 6);
-  // Hands
+  ctx.fillRect(px + 4 * f, py + 16 * f + bounce + armSwing, 4 * f, 6 * f);
+  ctx.fillRect(px + 24 * f, py + 16 * f + bounce - armSwing, 4 * f, 6 * f);
   ctx.fillStyle = "#f4d7a7";
-  ctx.fillRect(px + 4, py + 22 + bounce + armSwing, 4, 2);
-  ctx.fillRect(px + 24, py + 22 + bounce - armSwing, 4, 2);
-
-  // Legs (dark pants)
+  ctx.fillRect(px + 4 * f, py + 22 * f + bounce + armSwing, 4 * f, 2 * f);
+  ctx.fillRect(px + 24 * f, py + 22 * f + bounce - armSwing, 4 * f, 2 * f);
   ctx.fillStyle = "#3f3f74";
-  ctx.fillRect(px + 9, py + 23 + bounce, 6, 6 + legSwing);
-  ctx.fillRect(px + 17, py + 23 + bounce, 6, 6 - legSwing);
-
-  // Shoes
+  ctx.fillRect(px + 9 * f, py + 23 * f + bounce, 6 * f, 6 * f + legSwing);
+  ctx.fillRect(px + 17 * f, py + 23 * f + bounce, 6 * f, 6 * f - legSwing);
   ctx.fillStyle = "#1a1c2c";
-  ctx.fillRect(px + 8, py + 28 + bounce + Math.max(0, legSwing), 7, 3);
-  ctx.fillRect(px + 17, py + 28 + bounce + Math.max(0, -legSwing), 7, 3);
+  ctx.fillRect(px + 8 * f, py + 28 * f + bounce + Math.max(0, legSwing), 7 * f, 3 * f);
+  ctx.fillRect(px + 17 * f, py + 28 * f + bounce + Math.max(0, -legSwing), 7 * f, 3 * f);
 }
 
-function drawPlayerUp(ctx: CanvasRenderingContext2D, px: number, py: number, walkFrame: number, isMoving: boolean) {
-  const legSwing = isMoving ? (walkFrame === 1 ? 3 : walkFrame === 3 ? -3 : 0) : 0;
-  const armSwing = isMoving ? (walkFrame === 1 ? -2 : walkFrame === 3 ? 2 : 0) : 0;
-  const bounce = isMoving ? (walkFrame === 1 || walkFrame === 3 ? -1 : 0) : 0;
+function drawPlayerUp(ctx: CanvasRenderingContext2D, px: number, py: number, walkFrame: number, isMoving: boolean, f: number) {
+  const legSwing = isMoving ? (walkFrame === 1 ? 4 * f : walkFrame === 3 ? -4 * f : 0) : 0;
+  const armSwing = isMoving ? (walkFrame === 1 ? -3 * f : walkFrame === 3 ? 3 * f : 0) : 0;
+  const bounce = isMoving ? (walkFrame === 1 || walkFrame === 3 ? -2 * f : 0) : 0;
 
-  // Hat (back)
   ctx.fillStyle = "#e83b3b";
-  ctx.fillRect(px + 5, py - 2 + bounce, 22, 5);
-  // Hat back strap
+  ctx.fillRect(px + 5 * f, py - 2 * f + bounce, 22 * f, 5 * f);
   ctx.fillStyle = "#c62d2d";
-  ctx.fillRect(px + 12, py + 2 + bounce, 8, 2);
-
-  // Hair (back of head - more visible)
+  ctx.fillRect(px + 12 * f, py + 2 * f + bounce, 8 * f, 2 * f);
   ctx.fillStyle = "#2d3436";
-  ctx.fillRect(px + 7, py + 1 + bounce, 18, 14);
-
-  // Ears
+  ctx.fillRect(px + 7 * f, py + 1 * f + bounce, 18 * f, 14 * f);
   ctx.fillStyle = "#f4d7a7";
-  ctx.fillRect(px + 6, py + 7 + bounce, 2, 4);
-  ctx.fillRect(px + 24, py + 7 + bounce, 2, 4);
-
-  // Body (red shirt back)
+  ctx.fillRect(px + 6 * f, py + 7 * f + bounce, 2 * f, 4 * f);
+  ctx.fillRect(px + 24 * f, py + 7 * f + bounce, 2 * f, 4 * f);
   ctx.fillStyle = "#e83b3b";
-  ctx.fillRect(px + 8, py + 15 + bounce, 16, 8);
-  // Backpack strap detail
+  ctx.fillRect(px + 8 * f, py + 15 * f + bounce, 16 * f, 8 * f);
   ctx.fillStyle = "#c62d2d";
-  ctx.fillRect(px + 10, py + 15 + bounce, 2, 8);
-  ctx.fillRect(px + 20, py + 15 + bounce, 2, 8);
-
-  // Arms
+  ctx.fillRect(px + 10 * f, py + 15 * f + bounce, 2 * f, 8 * f);
+  ctx.fillRect(px + 20 * f, py + 15 * f + bounce, 2 * f, 8 * f);
   ctx.fillStyle = "#e83b3b";
-  ctx.fillRect(px + 4, py + 16 + bounce + armSwing, 4, 6);
-  ctx.fillRect(px + 24, py + 16 + bounce - armSwing, 4, 6);
+  ctx.fillRect(px + 4 * f, py + 16 * f + bounce + armSwing, 4 * f, 6 * f);
+  ctx.fillRect(px + 24 * f, py + 16 * f + bounce - armSwing, 4 * f, 6 * f);
   ctx.fillStyle = "#f4d7a7";
-  ctx.fillRect(px + 4, py + 22 + bounce + armSwing, 4, 2);
-  ctx.fillRect(px + 24, py + 22 + bounce - armSwing, 4, 2);
-
-  // Legs
+  ctx.fillRect(px + 4 * f, py + 22 * f + bounce + armSwing, 4 * f, 2 * f);
+  ctx.fillRect(px + 24 * f, py + 22 * f + bounce - armSwing, 4 * f, 2 * f);
   ctx.fillStyle = "#3f3f74";
-  ctx.fillRect(px + 9, py + 23 + bounce, 6, 6 + legSwing);
-  ctx.fillRect(px + 17, py + 23 + bounce, 6, 6 - legSwing);
-
-  // Shoes
+  ctx.fillRect(px + 9 * f, py + 23 * f + bounce, 6 * f, 6 * f + legSwing);
+  ctx.fillRect(px + 17 * f, py + 23 * f + bounce, 6 * f, 6 * f - legSwing);
   ctx.fillStyle = "#1a1c2c";
-  ctx.fillRect(px + 8, py + 28 + bounce + Math.max(0, legSwing), 7, 3);
-  ctx.fillRect(px + 17, py + 28 + bounce + Math.max(0, -legSwing), 7, 3);
+  ctx.fillRect(px + 8 * f, py + 28 * f + bounce + Math.max(0, legSwing), 7 * f, 3 * f);
+  ctx.fillRect(px + 17 * f, py + 28 * f + bounce + Math.max(0, -legSwing), 7 * f, 3 * f);
 }
 
-function drawPlayerLeft(ctx: CanvasRenderingContext2D, px: number, py: number, walkFrame: number, isMoving: boolean) {
-  const legSwing = isMoving ? (walkFrame === 1 ? 3 : walkFrame === 3 ? -3 : 0) : 0;
-  const armSwing = isMoving ? (walkFrame === 1 ? 3 : walkFrame === 3 ? -3 : 0) : 0;
-  const bounce = isMoving ? (walkFrame === 1 || walkFrame === 3 ? -1 : 0) : 0;
+function drawPlayerLeft(ctx: CanvasRenderingContext2D, px: number, py: number, walkFrame: number, isMoving: boolean, f: number) {
+  const legSwing = isMoving ? (walkFrame === 1 ? 4 * f : walkFrame === 3 ? -4 * f : 0) : 0;
+  const armSwing = isMoving ? (walkFrame === 1 ? 3 * f : walkFrame === 3 ? -3 * f : 0) : 0;
+  const bounce = isMoving ? (walkFrame === 1 || walkFrame === 3 ? -2 * f : 0) : 0;
 
-  // Hat (side view - brim sticks out left)
   ctx.fillStyle = "#e83b3b";
-  ctx.fillRect(px + 2, py - 2 + bounce, 20, 5);
+  ctx.fillRect(px + 2 * f, py - 2 * f + bounce, 20 * f, 5 * f);
   ctx.fillStyle = "#f4f4f4";
-  ctx.fillRect(px + 2, py + 2 + bounce, 10, 2);
-
-  // Hair
+  ctx.fillRect(px + 2 * f, py + 2 * f + bounce, 10 * f, 2 * f);
   ctx.fillStyle = "#2d3436";
-  ctx.fillRect(px + 8, py + 1 + bounce, 14, 5);
-  ctx.fillRect(px + 7, py + 3 + bounce, 2, 6);
-
-  // Head
+  ctx.fillRect(px + 8 * f, py + 1 * f + bounce, 14 * f, 5 * f);
+  ctx.fillRect(px + 7 * f, py + 3 * f + bounce, 2 * f, 6 * f);
   ctx.fillStyle = "#f4d7a7";
-  ctx.fillRect(px + 9, py + 3 + bounce, 13, 12);
-
-  // Eye (one visible, looking left)
+  ctx.fillRect(px + 9 * f, py + 3 * f + bounce, 13 * f, 12 * f);
   ctx.fillStyle = "#1a1c2c";
-  ctx.fillRect(px + 10, py + 8 + bounce, 3, 3);
+  ctx.fillRect(px + 10 * f, py + 8 * f + bounce, 3 * f, 3 * f);
   ctx.fillStyle = "#f4f4f4";
-  ctx.fillRect(px + 10, py + 8 + bounce, 1, 1);
-
-  // Nose
+  ctx.fillRect(px + 10 * f, py + 8 * f + bounce, 1 * f, 1 * f);
   ctx.fillStyle = "#d4b78a";
-  ctx.fillRect(px + 8, py + 10 + bounce, 2, 2);
-
-  // Body
+  ctx.fillRect(px + 8 * f, py + 10 * f + bounce, 2 * f, 2 * f);
   ctx.fillStyle = "#e83b3b";
-  ctx.fillRect(px + 10, py + 15 + bounce, 12, 8);
+  ctx.fillRect(px + 10 * f, py + 15 * f + bounce, 12 * f, 8 * f);
   ctx.fillStyle = "#c62d2d";
-  ctx.fillRect(px + 10, py + 15 + bounce, 3, 8);
-
-  // Front arm (swings)
+  ctx.fillRect(px + 10 * f, py + 15 * f + bounce, 3 * f, 8 * f);
   ctx.fillStyle = "#e83b3b";
-  ctx.fillRect(px + 7, py + 16 + bounce - armSwing, 4, 6);
+  ctx.fillRect(px + 7 * f, py + 16 * f + bounce - armSwing, 4 * f, 6 * f);
   ctx.fillStyle = "#f4d7a7";
-  ctx.fillRect(px + 7, py + 22 + bounce - armSwing, 4, 2);
-
-  // Back arm (hidden mostly, opposite swing)
+  ctx.fillRect(px + 7 * f, py + 22 * f + bounce - armSwing, 4 * f, 2 * f);
   ctx.fillStyle = "#c62d2d";
-  ctx.fillRect(px + 21, py + 16 + bounce + armSwing, 3, 5);
-
-  // Legs (side view, one in front of other)
+  ctx.fillRect(px + 21 * f, py + 16 * f + bounce + armSwing, 3 * f, 5 * f);
   ctx.fillStyle = "#3f3f74";
-  // Front leg
-  ctx.fillRect(px + 10 - legSwing, py + 23 + bounce, 5, 6);
-  // Back leg
+  ctx.fillRect(px + 10 * f - legSwing, py + 23 * f + bounce, 5 * f, 6 * f);
   ctx.fillStyle = "#2d2d5c";
-  ctx.fillRect(px + 17 + legSwing, py + 23 + bounce, 5, 6);
-
-  // Shoes
+  ctx.fillRect(px + 17 * f + legSwing, py + 23 * f + bounce, 5 * f, 6 * f);
   ctx.fillStyle = "#1a1c2c";
-  ctx.fillRect(px + 8 - legSwing, py + 28 + bounce, 7, 3);
+  ctx.fillRect(px + 8 * f - legSwing, py + 28 * f + bounce, 7 * f, 3 * f);
   ctx.fillStyle = "#0d0d1a";
-  ctx.fillRect(px + 16 + legSwing, py + 28 + bounce, 6, 3);
+  ctx.fillRect(px + 16 * f + legSwing, py + 28 * f + bounce, 6 * f, 3 * f);
 }
 
-function drawPlayerRight(ctx: CanvasRenderingContext2D, px: number, py: number, walkFrame: number, isMoving: boolean) {
-  const legSwing = isMoving ? (walkFrame === 1 ? 3 : walkFrame === 3 ? -3 : 0) : 0;
-  const armSwing = isMoving ? (walkFrame === 1 ? 3 : walkFrame === 3 ? -3 : 0) : 0;
-  const bounce = isMoving ? (walkFrame === 1 || walkFrame === 3 ? -1 : 0) : 0;
+function drawPlayerRight(ctx: CanvasRenderingContext2D, px: number, py: number, walkFrame: number, isMoving: boolean, f: number) {
+  const legSwing = isMoving ? (walkFrame === 1 ? 4 * f : walkFrame === 3 ? -4 * f : 0) : 0;
+  const armSwing = isMoving ? (walkFrame === 1 ? 3 * f : walkFrame === 3 ? -3 * f : 0) : 0;
+  const bounce = isMoving ? (walkFrame === 1 || walkFrame === 3 ? -2 * f : 0) : 0;
 
-  // Hat (side view - brim sticks out right)
   ctx.fillStyle = "#e83b3b";
-  ctx.fillRect(px + 10, py - 2 + bounce, 20, 5);
+  ctx.fillRect(px + 10 * f, py - 2 * f + bounce, 20 * f, 5 * f);
   ctx.fillStyle = "#f4f4f4";
-  ctx.fillRect(px + 20, py + 2 + bounce, 10, 2);
-
-  // Hair
+  ctx.fillRect(px + 20 * f, py + 2 * f + bounce, 10 * f, 2 * f);
   ctx.fillStyle = "#2d3436";
-  ctx.fillRect(px + 10, py + 1 + bounce, 14, 5);
-  ctx.fillRect(px + 23, py + 3 + bounce, 2, 6);
-
-  // Head
+  ctx.fillRect(px + 10 * f, py + 1 * f + bounce, 14 * f, 5 * f);
+  ctx.fillRect(px + 23 * f, py + 3 * f + bounce, 2 * f, 6 * f);
   ctx.fillStyle = "#f4d7a7";
-  ctx.fillRect(px + 10, py + 3 + bounce, 13, 12);
-
-  // Eye (one visible, looking right)
+  ctx.fillRect(px + 10 * f, py + 3 * f + bounce, 13 * f, 12 * f);
   ctx.fillStyle = "#1a1c2c";
-  ctx.fillRect(px + 19, py + 8 + bounce, 3, 3);
+  ctx.fillRect(px + 19 * f, py + 8 * f + bounce, 3 * f, 3 * f);
   ctx.fillStyle = "#f4f4f4";
-  ctx.fillRect(px + 21, py + 8 + bounce, 1, 1);
-
-  // Nose
+  ctx.fillRect(px + 21 * f, py + 8 * f + bounce, 1 * f, 1 * f);
   ctx.fillStyle = "#d4b78a";
-  ctx.fillRect(px + 22, py + 10 + bounce, 2, 2);
-
-  // Body
+  ctx.fillRect(px + 22 * f, py + 10 * f + bounce, 2 * f, 2 * f);
   ctx.fillStyle = "#e83b3b";
-  ctx.fillRect(px + 10, py + 15 + bounce, 12, 8);
+  ctx.fillRect(px + 10 * f, py + 15 * f + bounce, 12 * f, 8 * f);
   ctx.fillStyle = "#c62d2d";
-  ctx.fillRect(px + 19, py + 15 + bounce, 3, 8);
-
-  // Front arm (swings)
+  ctx.fillRect(px + 19 * f, py + 15 * f + bounce, 3 * f, 8 * f);
   ctx.fillStyle = "#e83b3b";
-  ctx.fillRect(px + 21, py + 16 + bounce - armSwing, 4, 6);
+  ctx.fillRect(px + 21 * f, py + 16 * f + bounce - armSwing, 4 * f, 6 * f);
   ctx.fillStyle = "#f4d7a7";
-  ctx.fillRect(px + 21, py + 22 + bounce - armSwing, 4, 2);
-
-  // Back arm
+  ctx.fillRect(px + 21 * f, py + 22 * f + bounce - armSwing, 4 * f, 2 * f);
   ctx.fillStyle = "#c62d2d";
-  ctx.fillRect(px + 8, py + 16 + bounce + armSwing, 3, 5);
-
-  // Legs
+  ctx.fillRect(px + 8 * f, py + 16 * f + bounce + armSwing, 3 * f, 5 * f);
   ctx.fillStyle = "#3f3f74";
-  ctx.fillRect(px + 17 + legSwing, py + 23 + bounce, 5, 6);
+  ctx.fillRect(px + 17 * f + legSwing, py + 23 * f + bounce, 5 * f, 6 * f);
   ctx.fillStyle = "#2d2d5c";
-  ctx.fillRect(px + 10 - legSwing, py + 23 + bounce, 5, 6);
-
-  // Shoes
+  ctx.fillRect(px + 10 * f - legSwing, py + 23 * f + bounce, 5 * f, 6 * f);
   ctx.fillStyle = "#1a1c2c";
-  ctx.fillRect(px + 17 + legSwing, py + 28 + bounce, 7, 3);
+  ctx.fillRect(px + 17 * f + legSwing, py + 28 * f + bounce, 7 * f, 3 * f);
   ctx.fillStyle = "#0d0d1a";
-  ctx.fillRect(px + 10 - legSwing, py + 28 + bounce, 6, 3);
+  ctx.fillRect(px + 10 * f - legSwing, py + 28 * f + bounce, 6 * f, 3 * f);
 }
 
 // Draw an NPC
@@ -486,69 +387,57 @@ export function drawNPC(
 ) {
   const px = npc.x * TILE - camX;
   const py = npc.y * TILE - camY;
-  const s = TILE;
 
-  // Shadow
   ctx.fillStyle = "rgba(0,0,0,0.2)";
   ctx.beginPath();
-  ctx.ellipse(px + s / 2, py + s - 2, 7, 3, 0, 0, Math.PI * 2);
+  ctx.ellipse(px + TILE / 2, py + TILE - 3, 10, 4, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  const bob = Math.sin(frame * 0.05) * 1.5;
+  const bob = Math.sin(frame * 0.05) * 2;
 
-  // Body
   ctx.fillStyle = npc.color;
-  ctx.fillRect(px + 10, py + 12 + bob, 12, 10);
+  ctx.fillRect(px + 14, py + 18 + bob, 20, 14);
 
-  // Head
   ctx.fillStyle = "#f4d7a7";
-  ctx.fillRect(px + 10, py + 2 + bob, 12, 11);
+  ctx.fillRect(px + 14, py + 3 + bob, 20, 16);
 
-  // Hair
   ctx.fillStyle = npc.color;
-  ctx.fillRect(px + 9, py + bob, 14, 5);
+  ctx.fillRect(px + 13, py + bob, 22, 7);
 
-  // Eyes (blink occasionally)
   const blinkCycle = frame % 180;
   if (blinkCycle < 175) {
     ctx.fillStyle = "#1a1c2c";
-    ctx.fillRect(px + 12, py + 7 + bob, 2, 2);
-    ctx.fillRect(px + 18, py + 7 + bob, 2, 2);
-    // Eye highlight
+    ctx.fillRect(px + 17, py + 10 + bob, 4, 3);
+    ctx.fillRect(px + 27, py + 10 + bob, 4, 3);
     ctx.fillStyle = "#f4f4f4";
-    ctx.fillRect(px + 12, py + 7 + bob, 1, 1);
-    ctx.fillRect(px + 18, py + 7 + bob, 1, 1);
+    ctx.fillRect(px + 17, py + 10 + bob, 2, 2);
+    ctx.fillRect(px + 27, py + 10 + bob, 2, 2);
   } else {
     ctx.fillStyle = "#1a1c2c";
-    ctx.fillRect(px + 12, py + 8 + bob, 2, 1);
-    ctx.fillRect(px + 18, py + 8 + bob, 2, 1);
+    ctx.fillRect(px + 17, py + 12 + bob, 4, 1);
+    ctx.fillRect(px + 27, py + 12 + bob, 4, 1);
   }
 
-  // Legs
   ctx.fillStyle = "#3f3f74";
-  ctx.fillRect(px + 12, py + 22 + bob, 4, 6);
-  ctx.fillRect(px + 17, py + 22 + bob, 4, 6);
+  ctx.fillRect(px + 17, py + 32 + bob, 6, 10);
+  ctx.fillRect(px + 25, py + 32 + bob, 6, 10);
 
-  // Shoes
   ctx.fillStyle = "#1a1c2c";
-  ctx.fillRect(px + 11, py + 28 + bob, 5, 2);
-  ctx.fillRect(px + 17, py + 28 + bob, 5, 2);
+  ctx.fillRect(px + 16, py + 42 + bob, 7, 3);
+  ctx.fillRect(px + 25, py + 42 + bob, 7, 3);
 
-  // Name tag above NPC
   if (isNearby) {
-    // Name background
-    const nameWidth = npc.name.length * 6 + 12;
+    const nameWidth = npc.name.length * 7 + 14;
     ctx.fillStyle = "rgba(26,28,44,0.85)";
-    ctx.fillRect(px + s / 2 - nameWidth / 2, py - 22, nameWidth, 14);
+    ctx.fillRect(px + TILE / 2 - nameWidth / 2, py - 28, nameWidth, 18);
     ctx.fillStyle = npc.color;
-    ctx.font = "bold 8px monospace";
+    ctx.font = "bold 10px monospace";
     ctx.textAlign = "center";
-    ctx.fillText(npc.name, px + s / 2, py - 12);
+    ctx.fillText(npc.name, px + TILE / 2, py - 14);
 
-    // Exclamation mark
     ctx.fillStyle = "#e8c170";
-    ctx.font = "bold 18px monospace";
-    ctx.fillText("!", px + s / 2, py - 26);
+    ctx.font = "bold 22px monospace";
+    ctx.fillText("!", px + TILE / 2, py - 34);
   }
 }
 
@@ -563,24 +452,20 @@ export function drawTree(
   const px = x * TILE - camX;
   const py = y * TILE - camY;
 
-  // Trunk
   ctx.fillStyle = "#8b5a2b";
-  ctx.fillRect(px + 12, py + 16, 8, 16);
-  // Trunk highlight
+  ctx.fillRect(px + 18, py + 24, 12, 24);
   ctx.fillStyle = "#a06c3a";
-  ctx.fillRect(px + 14, py + 16, 3, 16);
+  ctx.fillRect(px + 21, py + 24, 5, 24);
 
-  // Canopy layers
   ctx.fillStyle = "#2d6b3e";
-  ctx.fillRect(px - 2, py - 4, 36, 22);
+  ctx.fillRect(px - 3, py - 6, TILE + 6, 33);
   ctx.fillStyle = "#3a8c50";
-  ctx.fillRect(px + 2, py - 8, 28, 18);
+  ctx.fillRect(px + 3, py - 12, TILE - 6, 27);
   ctx.fillStyle = "#4aad62";
-  ctx.fillRect(px + 6, py - 10, 20, 12);
+  ctx.fillRect(px + 9, py - 15, TILE - 18, 18);
 
-  // Highlight
   ctx.fillStyle = "#5bc474";
-  ctx.fillRect(px + 8, py - 8, 8, 4);
+  ctx.fillRect(px + 12, py - 12, 12, 6);
 }
 
 // Draw a fence segment
@@ -595,12 +480,12 @@ export function drawFence(
   const py = y * TILE - camY;
 
   ctx.fillStyle = "#a0815c";
-  ctx.fillRect(px + 2, py + 4, 6, 24);
-  ctx.fillRect(px + 24, py + 4, 6, 24);
+  ctx.fillRect(px + 3, py + 6, 8, 36);
+  ctx.fillRect(px + 36, py + 6, 8, 36);
 
   ctx.fillStyle = "#c4a76c";
-  ctx.fillRect(px, py + 8, TILE, 4);
-  ctx.fillRect(px, py + 18, TILE, 4);
+  ctx.fillRect(px, py + 12, TILE, 6);
+  ctx.fillRect(px, py + 27, TILE, 6);
 }
 
 function shadeColor(color: string, percent: number): string {

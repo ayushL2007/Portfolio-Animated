@@ -4,9 +4,10 @@ import { useState, useCallback, useRef } from "react";
 import GameCanvas, { type GameLocation } from "@/components/game-canvas";
 import TitleScreen from "@/components/title-screen";
 import DialogBox from "@/components/dialog-box";
+import SectionModal from "@/components/section-modal";
 import DPadOverlay from "@/components/dpad-overlay";
 import GameHUD from "@/components/game-hud";
-import { type Building, type NPC, ayushFacts } from "@/lib/game-data";
+import { type Building, type NPC, ayushFacts, buildings as allBuildings } from "@/lib/game-data";
 import { type BuildingInterior } from "@/lib/interior-data";
 
 export default function Home() {
@@ -14,11 +15,14 @@ export default function Home() {
   const [dialog, setDialog] = useState<{ text: string; speaker?: string } | null>(null);
   const [nearBuilding, setNearBuilding] = useState<Building | null>(null);
   const [currentLocation, setCurrentLocation] = useState<GameLocation>({ type: "overworld" });
+  // Section modal shown after receptionist dialog finishes
+  const [sectionModal, setSectionModal] = useState<Building | null>(null);
   const npcFactIndexRef = useRef<Record<string, number>>({});
-  // Dialog queue for receptionist multi-line conversations
   const dialogQueueRef = useRef<{ text: string; speaker?: string }[]>([]);
+  // Track which building's receptionist we're talking to for modal trigger
+  const activeReceptionistBuildingRef = useRef<string | null>(null);
 
-  const isPaused = !!dialog;
+  const isPaused = !!dialog || !!sectionModal;
 
   const handleStart = useCallback(() => {
     setStarted(true);
@@ -28,18 +32,16 @@ export default function Home() {
     });
   }, []);
 
-  // Player pressed SPACE near a building door -- trigger enter
   const handleBuildingEnter = useCallback((building: Building) => {
     setDialog({
       text: `Entering ${building.signText}...`,
       speaker: undefined,
     });
-    // After dialog dismiss, actually teleport inside (handled via queue)
     dialogQueueRef.current = [{
       text: "Talk to the receptionist for info! Walk to the EXIT mat to leave.",
       speaker: undefined,
     }];
-    // Trigger the canvas to teleport the player inside
+    activeReceptionistBuildingRef.current = null;
     setTimeout(() => {
       const enterFn = (window as unknown as Record<string, unknown>).__gameEnterBuilding as ((id: string) => void) | undefined;
       if (enterFn) enterFn(building.id);
@@ -49,6 +51,8 @@ export default function Home() {
   const handleBuildingExit = useCallback(() => {
     setCurrentLocation({ type: "overworld" });
     dialogQueueRef.current = [];
+    activeReceptionistBuildingRef.current = null;
+    setSectionModal(null);
     setDialog({
       text: "You left the building. Keep exploring AYUSH TOWN!",
       speaker: undefined,
@@ -59,12 +63,10 @@ export default function Home() {
     setCurrentLocation(loc);
   }, []);
 
-  // Receptionist conversation -- queues all lines
   const handleReceptionistTalk = useCallback((interior: BuildingInterior) => {
     const lines = interior.receptionist.dialogLines;
     if (lines.length === 0) return;
-
-    // Show first line immediately, queue the rest
+    activeReceptionistBuildingRef.current = interior.buildingId;
     setDialog({ text: lines[0], speaker: interior.receptionist.name });
     dialogQueueRef.current = lines.slice(1).map((text) => ({
       text,
@@ -72,12 +74,10 @@ export default function Home() {
     }));
   }, []);
 
-  // Overworld NPC talk
   const handleNPCTalk = useCallback((npc: NPC) => {
     const randomMsg = npc.messages[Math.floor(Math.random() * npc.messages.length)];
     const useFact = Math.random() < 0.3;
     let message = randomMsg;
-
     if (useFact) {
       if (!npcFactIndexRef.current[npc.id]) {
         npcFactIndexRef.current[npc.id] = 0;
@@ -88,7 +88,7 @@ export default function Home() {
       message = ayushFacts[factIdx];
       npcFactIndexRef.current[npc.id] = idx + 1;
     }
-
+    activeReceptionistBuildingRef.current = null;
     setDialog({ text: message, speaker: npc.name });
   }, []);
 
@@ -98,7 +98,7 @@ export default function Home() {
     setNearBuilding(building);
   }, []);
 
-  // Dismiss dialog -- advances queue if there are more lines
+  // Dismiss dialog -- advances queue; when receptionist dialog ends, show section modal
   const handleDismissDialog = useCallback(() => {
     const queue = dialogQueueRef.current;
     if (queue.length > 0) {
@@ -106,10 +106,27 @@ export default function Home() {
       setDialog(next);
     } else {
       setDialog(null);
+      // If we just finished a receptionist conversation, show the section modal
+      const buildingId = activeReceptionistBuildingRef.current;
+      if (buildingId) {
+        const building = allBuildings.find((b) => b.id === buildingId);
+        if (building) {
+          setSectionModal(building);
+        }
+        activeReceptionistBuildingRef.current = null;
+      }
     }
   }, []);
 
+  const handleCloseModal = useCallback(() => {
+    setSectionModal(null);
+  }, []);
+
   const handleAction = useCallback(() => {
+    if (sectionModal) {
+      setSectionModal(null);
+      return;
+    }
     if (dialog) {
       handleDismissDialog();
       return;
@@ -120,7 +137,7 @@ export default function Home() {
       bubbles: true,
     });
     window.dispatchEvent(event);
-  }, [dialog, handleDismissDialog]);
+  }, [dialog, sectionModal, handleDismissDialog]);
 
   if (!started) {
     return <TitleScreen onStart={handleStart} />;
@@ -147,6 +164,13 @@ export default function Home() {
           text={dialog.text}
           speaker={dialog.speaker}
           onDismiss={handleDismissDialog}
+        />
+      )}
+
+      {sectionModal && (
+        <SectionModal
+          building={sectionModal}
+          onClose={handleCloseModal}
         />
       )}
 
