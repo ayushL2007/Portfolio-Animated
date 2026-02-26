@@ -7,9 +7,10 @@ export const BUILDING = 2;
 export const TREE = 3;
 export const FENCE = 4;
 export const WATER = 5;
+export const FLOWER_PATCH = 6;
 
-export const MAP_WIDTH = 22;
-export const MAP_HEIGHT = 24;
+export const MAP_WIDTH = 32;
+export const MAP_HEIGHT = 28;
 
 // Generate the world map
 export function generateMap(): number[][] {
@@ -34,66 +35,106 @@ export function generateMap(): number[][] {
     }
   }
 
-  // Create paths between buildings
-  // Horizontal main road
+  // === MAIN ROADS ===
+  // Horizontal main road (wide, two-lane)
   for (let x = 1; x < MAP_WIDTH - 1; x++) {
-    if (map[8][x] === GRASS) map[8][x] = PATH;
     if (map[9][x] === GRASS) map[9][x] = PATH;
+    if (map[10][x] === GRASS) map[10][x] = PATH;
   }
 
-  // Vertical paths to upper buildings
-  for (let y = 3; y < 9; y++) {
-    // Left building path
+  // Secondary horizontal road (south area)
+  for (let x = 5; x < MAP_WIDTH - 3; x++) {
+    if (map[18][x] === GRASS) map[18][x] = PATH;
+    if (map[19][x] === GRASS) map[19][x] = PATH;
+  }
+
+  // === VERTICAL PATHS ===
+  // Left column path (connects about + experience)
+  for (let y = 3; y < 19; y++) {
     if (map[y][5] === GRASS) map[y][5] = PATH;
     if (map[y][6] === GRASS) map[y][6] = PATH;
-    // Right building path
-    if (map[y][13] === GRASS) map[y][13] = PATH;
+  }
+
+  // Center-left column path (connects projects + education)
+  for (let y = 2; y < 19; y++) {
     if (map[y][14] === GRASS) map[y][14] = PATH;
+    if (map[y][15] === GRASS) map[y][15] = PATH;
   }
 
-  // Vertical paths to lower buildings
-  for (let y = 9; y < 16; y++) {
-    // Left building path
-    if (map[y][5] === GRASS) map[y][5] = PATH;
-    if (map[y][6] === GRASS) map[y][6] = PATH;
-    // Right building path
-    if (map[y][13] === GRASS) map[y][13] = PATH;
+  // Right column path (connects skills + links)
+  for (let y = 3; y < 19; y++) {
+    if (map[y][24] === GRASS) map[y][24] = PATH;
+    if (map[y][25] === GRASS) map[y][25] = PATH;
+  }
+
+  // Path to contact building (south center)
+  for (let y = 19; y < 24; y++) {
     if (map[y][14] === GRASS) map[y][14] = PATH;
+    if (map[y][15] === GRASS) map[y][15] = PATH;
   }
 
-  // Path to contact building (bottom center)
-  for (let y = 9; y < 21; y++) {
-    if (map[y][9] === GRASS) map[y][9] = PATH;
-    if (map[y][10] === GRASS) map[y][10] = PATH;
+  // === WATER FEATURES ===
+  // Pond on the east side
+  const pondCenterX = 29;
+  const pondCenterY = 5;
+  for (let dy = -2; dy <= 2; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      const wy = pondCenterY + dy;
+      const wx = pondCenterX + dx;
+      if (wy >= 0 && wy < MAP_HEIGHT && wx >= 0 && wx < MAP_WIDTH && map[wy][wx] === GRASS) {
+        map[wy][wx] = WATER;
+      }
+    }
   }
-  // Horizontal connector to contact
-  for (let x = 7; x < 12; x++) {
-    if (map[17][x] === GRASS) map[17][x] = PATH;
-    if (map[16][x] === GRASS) map[16][x] = PATH;
+  // Extra water tiles for natural shape
+  if (map[5][28] === GRASS) map[5][28] = WATER;
+  if (map[4][30] === GRASS) map[4][30] = WATER;
+  if (map[5][30] === GRASS) map[5][30] = WATER;
+  if (map[6][30] === GRASS) map[6][30] = WATER;
+
+  // Small stream bottom-left
+  for (let x = 0; x < 4; x++) {
+    if (map[25][x] === GRASS) map[25][x] = WATER;
+    if (map[26][x] === GRASS) map[26][x] = WATER;
   }
 
-  // Place trees around border and scattered
+  // === FLOWER PATCHES ===
+  const flowerPositions = [
+    [10, 4], [11, 5], [19, 3], [20, 4],
+    [10, 14], [11, 13], [19, 14], [20, 15],
+    [8, 22], [9, 23], [21, 22], [22, 23],
+  ];
+  for (const [fx, fy] of flowerPositions) {
+    if (fy < MAP_HEIGHT && fx < MAP_WIDTH && map[fy][fx] === GRASS) {
+      map[fy][fx] = FLOWER_PATCH;
+    }
+  }
+
+  // === TREES ===
   const treePositions = [
     // Top border
-    [0, 0], [1, 0], [2, 0], [8, 0], [9, 0], [10, 0], [18, 0], [19, 0], [20, 0], [21, 0],
-    [0, 1], [1, 1], [10, 1], [19, 1], [20, 1], [21, 1],
+    [0, 0], [1, 0], [2, 0], [8, 0], [9, 0], [10, 0], [19, 0], [20, 0],
+    [26, 0], [27, 0], [28, 0], [31, 0],
+    [0, 1], [1, 1], [10, 1], [20, 1], [27, 1], [31, 1],
     // Left border
-    [0, 2], [0, 3], [0, 5], [0, 6], [0, 7], [0, 10], [0, 12], [0, 14], [0, 16], [0, 18], [0, 20],
-    [1, 5], [1, 10], [1, 14], [1, 18], [1, 20],
+    [0, 2], [0, 3], [0, 5], [0, 6], [0, 7], [0, 10], [0, 12], [0, 14], [0, 16], [0, 18], [0, 20], [0, 22],
+    [1, 5], [1, 10], [1, 14], [1, 18], [1, 22],
     // Right border
-    [21, 2], [21, 4], [21, 6], [21, 8], [21, 10], [21, 12], [21, 14], [21, 16], [21, 18], [21, 20],
-    [20, 4], [20, 10], [20, 14], [20, 18],
+    [31, 2], [31, 4], [31, 8], [31, 10], [31, 12], [31, 14], [31, 16], [31, 18], [31, 20], [31, 22],
+    [30, 10], [30, 14], [30, 18], [30, 22],
     // Bottom border
-    [0, 22], [1, 22], [2, 22], [3, 22], [4, 22], [5, 22], [6, 22],
-    [14, 22], [15, 22], [16, 22], [17, 22], [18, 22], [19, 22], [20, 22], [21, 22],
-    [0, 23], [1, 23], [2, 23], [3, 23], [18, 23], [19, 23], [20, 23], [21, 23],
+    [0, 27], [1, 27], [2, 27], [3, 27], [4, 27], [5, 27], [6, 27], [7, 27],
+    [20, 27], [21, 27], [22, 27], [23, 27], [24, 27], [25, 27], [26, 27], [27, 27], [28, 27], [29, 27], [30, 27], [31, 27],
     // Interior decorative trees
-    [2, 8], [19, 8],
-    [18, 3], [19, 3],
-    [2, 16], [2, 18],
-    [18, 16], [19, 16],
-    [14, 20], [15, 20], [16, 20],
-    [4, 20], [5, 20], [6, 20],
+    [2, 9], [28, 9], [2, 18], [28, 18],
+    [9, 1], [21, 1],
+    [2, 21], [3, 22], [28, 21], [29, 22],
+    [8, 25], [9, 25], [10, 25], [20, 25], [21, 25], [22, 25],
+    // Park area bottom-center
+    [13, 26], [14, 26], [15, 26], [16, 26], [17, 26],
+    // Scattered interior
+    [10, 11], [20, 7], [27, 14], [3, 20],
+    [29, 16], [30, 16],
   ];
 
   for (const [tx, ty] of treePositions) {
@@ -102,11 +143,15 @@ export function generateMap(): number[][] {
     }
   }
 
-  // Place fences near paths
+  // === FENCES ===
   const fencePositions = [
-    // Along main road
-    [1, 7], [2, 7], [19, 7], [20, 7],
-    [1, 10], [2, 10], [19, 10], [20, 10],
+    // Along main road decorations
+    [1, 8], [2, 8], [3, 8], [27, 8], [28, 8], [29, 8],
+    [1, 11], [2, 11], [27, 11], [28, 11], [29, 11],
+    // Near pond
+    [27, 3], [28, 3], [27, 7], [28, 7],
+    // South area
+    [5, 17], [6, 17], [24, 17], [25, 17],
   ];
 
   for (const [fx, fy] of fencePositions) {
@@ -122,7 +167,7 @@ export function generateMap(): number[][] {
 export function isWalkable(map: number[][], x: number, y: number): boolean {
   if (x < 0 || y < 0 || x >= MAP_WIDTH || y >= MAP_HEIGHT) return false;
   const tile = map[y][x];
-  return tile === GRASS || tile === PATH;
+  return tile === GRASS || tile === PATH || tile === FLOWER_PATCH;
 }
 
 // Check if player is near a building door

@@ -10,6 +10,7 @@ import {
   drawNPC,
   drawTree,
   drawFence,
+  drawFlowerPatch,
 } from "@/lib/pixel-renderer";
 import {
   generateMap,
@@ -23,10 +24,11 @@ import {
   TREE,
   FENCE,
   WATER,
+  FLOWER_PATCH,
 } from "@/lib/world-map";
 
 const TILE = 32;
-const MOVE_COOLDOWN = 120; // ms between moves
+const MOVE_COOLDOWN = 120;
 
 interface GameCanvasProps {
   onBuildingEnter: (building: Building) => void;
@@ -44,19 +46,17 @@ export default function GameCanvas({
   isPaused,
 }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const playerRef = useRef({ x: 9, y: 9, dir: 0, frame: 0, moving: false });
+  const playerRef = useRef({ x: 15, y: 10, dir: 0, frame: 0, moving: false });
   const keysRef = useRef<Set<string>>(new Set());
   const lastMoveRef = useRef(0);
   const mapRef = useRef<number[][]>([]);
   const animFrameRef = useRef(0);
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
 
-  // Initialize map
   useEffect(() => {
     mapRef.current = generateMap();
   }, []);
 
-  // Handle resize
   useEffect(() => {
     function handleResize() {
       setCanvasSize({
@@ -69,7 +69,6 @@ export default function GameCanvas({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Keyboard input
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (isPaused) return;
@@ -101,7 +100,6 @@ export default function GameCanvas({
     };
   }, [isPaused, onBuildingEnter, onNPCTalk]);
 
-  // D-pad controls (called from parent)
   const handleDPad = useCallback(
     (direction: string) => {
       if (isPaused) return;
@@ -131,12 +129,12 @@ export default function GameCanvas({
         p.x = nx;
         p.y = ny;
         p.frame++;
+        p.moving = true;
       }
     },
     [isPaused]
   );
 
-  // Expose dpad handler on window for the overlay
   useEffect(() => {
     (window as unknown as Record<string, unknown>).__gameDPad = handleDPad;
     return () => {
@@ -164,6 +162,7 @@ export default function GameCanvas({
       }
 
       // Process keyboard movement
+      let movedThisFrame = false;
       if (!isPaused && now - lastMoveRef.current > MOVE_COOLDOWN) {
         let moved = false;
         let nx = p.x;
@@ -208,10 +207,28 @@ export default function GameCanvas({
           p.y = ny;
           p.frame++;
           lastMoveRef.current = now;
+          movedThisFrame = true;
         } else if (moved) {
           lastMoveRef.current = now;
         }
       }
+
+      // Track if any movement key is held
+      const anyKeyHeld =
+        keysRef.current.has("ArrowUp") ||
+        keysRef.current.has("ArrowDown") ||
+        keysRef.current.has("ArrowLeft") ||
+        keysRef.current.has("ArrowRight") ||
+        keysRef.current.has("w") ||
+        keysRef.current.has("W") ||
+        keysRef.current.has("a") ||
+        keysRef.current.has("A") ||
+        keysRef.current.has("s") ||
+        keysRef.current.has("S") ||
+        keysRef.current.has("d") ||
+        keysRef.current.has("D");
+
+      p.moving = anyKeyHeld || movedThisFrame;
 
       // Check proximity
       const nearBuilding = getNearbyBuilding(p.x, p.y);
@@ -230,17 +247,11 @@ export default function GameCanvas({
       ctx.fillStyle = "#1a1c2c";
       ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
 
-      // Determine visible tiles
+      // Visible tiles
       const startX = Math.max(0, Math.floor(camX / TILE) - 1);
       const startY = Math.max(0, Math.floor(camY / TILE) - 1);
-      const endX = Math.min(
-        MAP_WIDTH,
-        Math.ceil((camX + canvasSize.width) / TILE) + 1
-      );
-      const endY = Math.min(
-        MAP_HEIGHT,
-        Math.ceil((camY + canvasSize.height) / TILE) + 1
-      );
+      const endX = Math.min(MAP_WIDTH, Math.ceil((camX + canvasSize.width) / TILE) + 1);
+      const endY = Math.min(MAP_HEIGHT, Math.ceil((camY + canvasSize.height) / TILE) + 1);
 
       // Draw ground tiles
       for (let y = startY; y < endY; y++) {
@@ -250,6 +261,8 @@ export default function GameCanvas({
             drawPath(ctx, x, y, camX, camY);
           } else if (tile === WATER) {
             drawWater(ctx, x, y, camX, camY, animFrameRef.current);
+          } else if (tile === FLOWER_PATCH) {
+            drawFlowerPatch(ctx, x, y, camX, camY);
           } else if (tile !== undefined) {
             drawGrass(ctx, x, y, camX, camY);
           }
@@ -286,8 +299,8 @@ export default function GameCanvas({
         drawNPC(ctx, npc, camX, camY, animFrameRef.current, isNear);
       }
 
-      // Draw player
-      drawPlayer(ctx, p.x, p.y, camX, camY, p.dir, p.frame);
+      // Draw player with proper isMoving flag
+      drawPlayer(ctx, p.x, p.y, camX, camY, p.dir, p.frame, p.moving);
 
       animFrameRef.current++;
       requestAnimationFrame(gameLoop);
@@ -310,7 +323,6 @@ export default function GameCanvas({
   );
 }
 
-// Water drawing with animation
 function drawWater(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -328,4 +340,9 @@ function drawWater(
   ctx.fillStyle = "#5b9de8";
   ctx.fillRect(px + 4, py + 8 + wave, 24, 4);
   ctx.fillRect(px + 8, py + 20 - wave, 20, 3);
+  // Sparkle
+  if ((x + y + Math.floor(frame / 30)) % 7 === 0) {
+    ctx.fillStyle = "#aad4ff";
+    ctx.fillRect(px + 12, py + 12 + wave, 3, 3);
+  }
 }

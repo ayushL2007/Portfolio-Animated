@@ -1,20 +1,20 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import GameCanvas from "@/components/game-canvas";
 import TitleScreen from "@/components/title-screen";
 import DialogBox from "@/components/dialog-box";
 import SectionModal from "@/components/section-modal";
 import DPadOverlay from "@/components/dpad-overlay";
 import GameHUD from "@/components/game-hud";
-import { type Building, type NPC } from "@/lib/game-data";
-import { getNearbyBuilding, getNearbyNPC } from "@/lib/world-map";
+import { type Building, type NPC, ayushFacts } from "@/lib/game-data";
 
 export default function Home() {
   const [started, setStarted] = useState(false);
   const [dialog, setDialog] = useState<{ text: string; speaker?: string } | null>(null);
   const [activeBuilding, setActiveBuilding] = useState<Building | null>(null);
   const [nearBuilding, setNearBuilding] = useState<Building | null>(null);
+  const npcFactIndexRef = useRef<Record<string, number>>({});
 
   const isPaused = !!dialog || !!activeBuilding;
 
@@ -31,11 +31,31 @@ export default function Home() {
   }, []);
 
   const handleNPCTalk = useCallback((npc: NPC) => {
-    setDialog({ text: npc.message, speaker: "TOWNSPERSON" });
+    // Pick a random message from the NPC's message pool
+    const randomMsg = npc.messages[Math.floor(Math.random() * npc.messages.length)];
+
+    // Also sometimes mix in a random Ayush fact (30% chance)
+    const useFact = Math.random() < 0.3;
+    let message = randomMsg;
+
+    if (useFact) {
+      // Cycle through facts for this NPC so they don't repeat immediately
+      if (!npcFactIndexRef.current[npc.id]) {
+        npcFactIndexRef.current[npc.id] = 0;
+      }
+      const idx = npcFactIndexRef.current[npc.id];
+      // Shuffle deterministically per NPC so each NPC shares different facts
+      const offset = npc.id.charCodeAt(0) * 3;
+      const factIdx = (idx + offset) % ayushFacts.length;
+      message = ayushFacts[factIdx];
+      npcFactIndexRef.current[npc.id] = idx + 1;
+    }
+
+    setDialog({ text: message, speaker: npc.name });
   }, []);
 
   const handleNPCLeave = useCallback(() => {
-    // No-op (dialog stays until dismissed)
+    // Dialog stays until dismissed
   }, []);
 
   const handleNearBuilding = useCallback((building: Building | null) => {
@@ -59,7 +79,6 @@ export default function Home() {
       setActiveBuilding(null);
       return;
     }
-    // Simulate space press for interacting
     const event = new KeyboardEvent("keydown", {
       key: " ",
       code: "Space",

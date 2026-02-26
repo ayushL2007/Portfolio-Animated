@@ -70,10 +70,14 @@ function renderSection(section: string) {
       return <AboutSection />;
     case "projects":
       return <ProjectsSection />;
+    case "skills":
+      return <SkillsSection />;
     case "experience":
       return <ExperienceSection />;
     case "education":
       return <EducationSection />;
+    case "links":
+      return <LinksSection />;
     case "contact":
       return <ContactSection />;
     default:
@@ -205,6 +209,110 @@ function EducationSection() {
             ))}
           </ul>
         </div>
+      ))}
+    </div>
+  );
+}
+
+function SkillsSection() {
+  const { skills } = portfolioData;
+  const categories = [
+    { label: "FRONT-END", items: ["HTML", "CSS", "JavaScript", "XML"] },
+    { label: "BACK-END", items: ["Ruby", "Rails", "Java", "C"] },
+    { label: "MOBILE", items: ["Android", "Java", "XML"] },
+    { label: "SYSTEMS", items: ["Linux/OS", "C"] },
+  ];
+  return (
+    <div className="flex flex-col gap-6">
+      <h3 className="text-primary text-2xl font-mono">{"Skills & Tools"}</h3>
+      <div className="flex flex-wrap gap-2">
+        {skills.map((skill) => (
+          <span
+            key={skill.name}
+            className="px-3 py-2 text-base font-mono border-2 text-foreground"
+            style={{ borderColor: skill.color, backgroundColor: skill.color + "18" }}
+          >
+            {skill.name}
+          </span>
+        ))}
+      </div>
+      <div className="flex flex-col gap-4 mt-2">
+        {categories.map((cat) => (
+          <div key={cat.label} className="border-2 border-border p-3">
+            <h4 className="text-primary font-sans text-xs mb-2">{cat.label}</h4>
+            <div className="flex flex-wrap gap-2">
+              {cat.items.map((item) => {
+                const skill = skills.find((s) => s.name === item);
+                return (
+                  <span
+                    key={item}
+                    className="text-sm font-mono px-2 py-1 bg-muted text-muted-foreground"
+                    style={skill ? { color: skill.color } : {}}
+                  >
+                    {item}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="text-muted-foreground text-sm font-mono leading-relaxed">
+        {"Full Stack Development with deep knowledge of Operating Systems and Computer Organization."}
+      </p>
+    </div>
+  );
+}
+
+function LinksSection() {
+  const { contact, name } = portfolioData;
+  const links = [
+    {
+      label: "GitHub Profile",
+      url: contact.github,
+      desc: "Check out all repositories and open source contributions",
+      icon: "code",
+    },
+    {
+      label: "LinkedIn",
+      url: contact.linkedin,
+      desc: "Professional profile and network",
+      icon: "briefcase",
+    },
+    {
+      label: "Portfolio (Rails)",
+      url: "https://github.com/ayushL2007/Portfolio",
+      desc: "The original Ruby on Rails portfolio with crystal-tile UI",
+      icon: "globe",
+    },
+    {
+      label: "Email",
+      url: `mailto:${contact.email}`,
+      desc: contact.email,
+      icon: "mail",
+    },
+  ];
+  return (
+    <div className="flex flex-col gap-5">
+      <h3 className="text-primary text-2xl font-mono">{"Links & Resources"}</h3>
+      <p className="text-muted-foreground text-sm font-mono leading-relaxed">
+        {"All of "}{name}{"'s important links in one place:"}
+      </p>
+      {links.map((link) => (
+        <a
+          key={link.label}
+          href={link.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex flex-col gap-1 border-2 border-border p-4 hover:border-primary transition-colors group"
+        >
+          <p className="text-foreground text-lg font-mono group-hover:text-primary transition-colors">
+            {link.label}
+          </p>
+          <p className="text-muted-foreground text-sm font-sans">
+            {link.desc}
+          </p>
+        </a>
       ))}
     </div>
   );

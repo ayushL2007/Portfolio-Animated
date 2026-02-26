@@ -13,11 +13,9 @@ export function drawGrass(
   const px = x * TILE - camX;
   const py = y * TILE - camY;
 
-  // Base grass
   ctx.fillStyle = "#4a7c59";
   ctx.fillRect(px, py, TILE, TILE);
 
-  // Grass blades (deterministic from position)
   const seed = (x * 7 + y * 13) % 5;
   ctx.fillStyle = "#5a9c6a";
   if (seed === 0) {
@@ -40,7 +38,6 @@ export function drawGrass(
     ctx.fillRect(px + 14, py + 28, 2, 2);
   }
 
-  // Flower accent (rare)
   if ((x * 3 + y * 11) % 17 === 0) {
     ctx.fillStyle = "#e8c170";
     ctx.fillRect(px + 14, py + 14, 4, 4);
@@ -51,10 +48,39 @@ export function drawGrass(
     ctx.fillRect(px + 14, py + 18, 2, 2);
   }
 
-  // Grid line (subtle)
   ctx.fillStyle = "rgba(0,0,0,0.05)";
   ctx.fillRect(px, py, TILE, 1);
   ctx.fillRect(px, py, 1, TILE);
+}
+
+// Draw a flower patch tile
+export function drawFlowerPatch(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  camX: number,
+  camY: number
+) {
+  const px = x * TILE - camX;
+  const py = y * TILE - camY;
+
+  // Base grass
+  ctx.fillStyle = "#4a7c59";
+  ctx.fillRect(px, py, TILE, TILE);
+  ctx.fillStyle = "#5a9c6a";
+  ctx.fillRect(px + 2, py + 2, TILE - 4, TILE - 4);
+
+  // Flowers
+  const colors = ["#e83b3b", "#e8c170", "#5b6ee1", "#f4f4f4", "#f89720"];
+  const seed = x * 3 + y * 7;
+  for (let i = 0; i < 4; i++) {
+    const fx = px + 4 + ((seed + i * 7) % 20);
+    const fy = py + 4 + (((seed + i * 11) % 20));
+    ctx.fillStyle = colors[(seed + i) % colors.length];
+    ctx.fillRect(fx, fy, 4, 4);
+    ctx.fillStyle = "#e8c170";
+    ctx.fillRect(fx + 1, fy + 1, 2, 2);
+  }
 }
 
 // Draw a path tile
@@ -71,7 +97,6 @@ export function drawPath(
   ctx.fillStyle = "#c4a76c";
   ctx.fillRect(px, py, TILE, TILE);
 
-  // Dirt texture
   ctx.fillStyle = "#b89a5c";
   const seed = (x * 11 + y * 7) % 4;
   if (seed === 0) {
@@ -86,7 +111,6 @@ export function drawPath(
     ctx.fillRect(px + 16, py + 12, 4, 2);
   }
 
-  // Edge stones
   ctx.fillStyle = "#a88c4c";
   ctx.fillRect(px, py, TILE, 1);
   ctx.fillRect(px, py, 1, TILE);
@@ -113,45 +137,35 @@ export function drawBuilding(
   ctx.fillStyle = building.color;
   ctx.fillRect(bx, by, bw, bh);
 
-  // Building border (pixel style)
+  // Building border
   ctx.strokeStyle = "rgba(0,0,0,0.4)";
   ctx.lineWidth = 2;
   ctx.strokeRect(bx + 1, by + 1, bw - 2, bh - 2);
 
-  // Roof (triangular pixel roof)
+  // Roof
   const roofHeight = TILE * 1.5;
   ctx.fillStyle = building.roofColor;
-  // Flat roof with overhang
   ctx.fillRect(bx - 4, by - roofHeight, bw + 8, roofHeight);
-  // Roof ridge
   ctx.fillStyle = shadeColor(building.roofColor, -20);
   ctx.fillRect(bx - 4, by - roofHeight, bw + 8, 4);
   ctx.fillRect(bx - 4, by - 4, bw + 8, 4);
 
-  // Windows (pixel squares)
+  // Windows
   ctx.fillStyle = isNearby ? "#ffffaa" : "#87ceeb";
   const windowSize = 10;
   const windowY = by + TILE * 0.8;
-  // Left window
   ctx.fillRect(bx + TILE * 0.6, windowY, windowSize, windowSize);
-  // Right window
   ctx.fillRect(bx + bw - TILE * 0.6 - windowSize, windowY, windowSize, windowSize);
-  // Window frame
+  // Extra center window for wider buildings
+  if (building.width >= 6) {
+    ctx.fillRect(bx + bw / 2 - windowSize / 2, windowY, windowSize, windowSize);
+  }
+  // Window frames
   ctx.fillStyle = "rgba(0,0,0,0.3)";
   ctx.fillRect(bx + TILE * 0.6 + windowSize / 2 - 1, windowY, 2, windowSize);
   ctx.fillRect(bx + TILE * 0.6, windowY + windowSize / 2 - 1, windowSize, 2);
-  ctx.fillRect(
-    bx + bw - TILE * 0.6 - windowSize + windowSize / 2 - 1,
-    windowY,
-    2,
-    windowSize
-  );
-  ctx.fillRect(
-    bx + bw - TILE * 0.6 - windowSize,
-    windowY + windowSize / 2 - 1,
-    windowSize,
-    2
-  );
+  ctx.fillRect(bx + bw - TILE * 0.6 - windowSize + windowSize / 2 - 1, windowY, 2, windowSize);
+  ctx.fillRect(bx + bw - TILE * 0.6 - windowSize, windowY + windowSize / 2 - 1, windowSize, 2);
 
   // Door
   const doorW = TILE * 0.8;
@@ -160,28 +174,25 @@ export function drawBuilding(
   const doorY = by + bh - doorH;
   ctx.fillStyle = building.doorColor;
   ctx.fillRect(doorX, doorY, doorW, doorH);
-  // Door knob
   ctx.fillStyle = "#2d3436";
   ctx.fillRect(doorX + doorW - 8, doorY + doorH / 2, 4, 4);
-  // Door frame
   ctx.strokeStyle = "rgba(0,0,0,0.3)";
   ctx.lineWidth = 2;
   ctx.strokeRect(doorX, doorY, doorW, doorH);
 
-  // Sign text above building
-  ctx.fillStyle = "#1a1c2c";
-  ctx.fillRect(bx + bw / 2 - 50, by - roofHeight - 24, 100, 20);
+  // Sign
+  const signW = Math.max(100, building.signText.length * 7 + 20);
   ctx.fillStyle = "#e8c170";
-  ctx.fillRect(bx + bw / 2 - 52, by - roofHeight - 26, 104, 24);
+  ctx.fillRect(bx + bw / 2 - signW / 2 - 2, by - roofHeight - 26, signW + 4, 24);
   ctx.fillStyle = "#1a1c2c";
-  ctx.fillRect(bx + bw / 2 - 50, by - roofHeight - 24, 100, 20);
+  ctx.fillRect(bx + bw / 2 - signW / 2, by - roofHeight - 24, signW, 20);
 
   ctx.fillStyle = "#e8c170";
   ctx.font = "bold 9px monospace";
   ctx.textAlign = "center";
   ctx.fillText(building.signText, bx + bw / 2, by - roofHeight - 10);
 
-  // Glow effect when nearby
+  // Glow when nearby
   if (isNearby) {
     ctx.strokeStyle = "#e8c170";
     ctx.lineWidth = 2;
@@ -189,7 +200,6 @@ export function drawBuilding(
     ctx.strokeRect(bx - 4, by - roofHeight - 28, bw + 8, bh + roofHeight + 32);
     ctx.setLineDash([]);
 
-    // "ENTER" prompt
     ctx.fillStyle = "#e8c170";
     ctx.font = "bold 11px monospace";
     ctx.textAlign = "center";
@@ -197,7 +207,8 @@ export function drawBuilding(
   }
 }
 
-// Draw the player character (pixel art trainer)
+// Draw the player character with proper directional walk animation
+// direction: 0=down, 1=up, 2=left, 3=right
 export function drawPlayer(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -205,73 +216,263 @@ export function drawPlayer(
   camX: number,
   camY: number,
   direction: number,
-  frame: number
+  frame: number,
+  isMoving: boolean
 ) {
   const px = x * TILE - camX;
   const py = y * TILE - camY;
-  const s = TILE;
+
+  // Walk cycle: 4 frames (0 = stand, 1 = step left, 2 = stand, 3 = step right)
+  const walkFrame = isMoving ? frame % 4 : 0;
 
   // Shadow
-  ctx.fillStyle = "rgba(0,0,0,0.2)";
+  ctx.fillStyle = "rgba(0,0,0,0.25)";
   ctx.beginPath();
-  ctx.ellipse(px + s / 2, py + s - 2, 8, 3, 0, 0, Math.PI * 2);
+  ctx.ellipse(px + 16, py + 31, 9, 3, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Body
-  ctx.fillStyle = "#e83b3b"; // Red shirt (like Red from Pokemon)
-  ctx.fillRect(px + 8, py + 12, 16, 10);
+  if (direction === 0) {
+    // === FACING DOWN (front view) ===
+    drawPlayerDown(ctx, px, py, walkFrame, isMoving);
+  } else if (direction === 1) {
+    // === FACING UP (back view) ===
+    drawPlayerUp(ctx, px, py, walkFrame, isMoving);
+  } else if (direction === 2) {
+    // === FACING LEFT ===
+    drawPlayerLeft(ctx, px, py, walkFrame, isMoving);
+  } else {
+    // === FACING RIGHT ===
+    drawPlayerRight(ctx, px, py, walkFrame, isMoving);
+  }
+}
 
-  // Arms with walk cycle
-  const armOffset = Math.sin(frame * 0.3) * 2;
-  ctx.fillRect(px + 4, py + 14 + armOffset, 4, 6);
-  ctx.fillRect(px + 24, py + 14 - armOffset, 4, 6);
+function drawPlayerDown(ctx: CanvasRenderingContext2D, px: number, py: number, walkFrame: number, isMoving: boolean) {
+  const legSwing = isMoving ? (walkFrame === 1 ? 3 : walkFrame === 3 ? -3 : 0) : 0;
+  const armSwing = isMoving ? (walkFrame === 1 ? -2 : walkFrame === 3 ? 2 : 0) : 0;
+  const bounce = isMoving ? (walkFrame === 1 || walkFrame === 3 ? -1 : 0) : 0;
 
-  // Legs with walk cycle
-  ctx.fillStyle = "#3f3f74"; // Dark pants
-  const legOffset = Math.sin(frame * 0.3) * 3;
-  ctx.fillRect(px + 10, py + 22, 5, 8 + legOffset);
-  ctx.fillRect(px + 17, py + 22, 5, 8 - legOffset);
+  // Hat
+  ctx.fillStyle = "#e83b3b";
+  ctx.fillRect(px + 5, py - 2 + bounce, 22, 5);
+  ctx.fillStyle = "#f4f4f4";
+  ctx.fillRect(px + 5, py + 2 + bounce, 22, 2);
+
+  // Hair
+  ctx.fillStyle = "#2d3436";
+  ctx.fillRect(px + 7, py + 1 + bounce, 18, 4);
+  ctx.fillRect(px + 6, py + 2 + bounce, 2, 4);
+  ctx.fillRect(px + 24, py + 2 + bounce, 2, 4);
+
+  // Head (skin)
+  ctx.fillStyle = "#f4d7a7";
+  ctx.fillRect(px + 8, py + 3 + bounce, 16, 12);
+
+  // Eyes
+  ctx.fillStyle = "#1a1c2c";
+  ctx.fillRect(px + 11, py + 8 + bounce, 3, 3);
+  ctx.fillRect(px + 18, py + 8 + bounce, 3, 3);
+  // Eye highlight
+  ctx.fillStyle = "#f4f4f4";
+  ctx.fillRect(px + 12, py + 8 + bounce, 1, 1);
+  ctx.fillRect(px + 19, py + 8 + bounce, 1, 1);
+
+  // Mouth
+  ctx.fillStyle = "#c4956a";
+  ctx.fillRect(px + 14, py + 12 + bounce, 4, 1);
+
+  // Body (red shirt)
+  ctx.fillStyle = "#e83b3b";
+  ctx.fillRect(px + 8, py + 15 + bounce, 16, 8);
+  // Shirt detail
+  ctx.fillStyle = "#c62d2d";
+  ctx.fillRect(px + 15, py + 15 + bounce, 2, 8);
+
+  // Arms
+  ctx.fillStyle = "#e83b3b";
+  ctx.fillRect(px + 4, py + 16 + bounce + armSwing, 4, 6);
+  ctx.fillRect(px + 24, py + 16 + bounce - armSwing, 4, 6);
+  // Hands
+  ctx.fillStyle = "#f4d7a7";
+  ctx.fillRect(px + 4, py + 22 + bounce + armSwing, 4, 2);
+  ctx.fillRect(px + 24, py + 22 + bounce - armSwing, 4, 2);
+
+  // Legs (dark pants)
+  ctx.fillStyle = "#3f3f74";
+  ctx.fillRect(px + 9, py + 23 + bounce, 6, 6 + legSwing);
+  ctx.fillRect(px + 17, py + 23 + bounce, 6, 6 - legSwing);
 
   // Shoes
   ctx.fillStyle = "#1a1c2c";
-  ctx.fillRect(px + 9, py + 28 + Math.max(0, legOffset), 6, 3);
-  ctx.fillRect(px + 17, py + 28 + Math.max(0, -legOffset), 6, 3);
+  ctx.fillRect(px + 8, py + 28 + bounce + Math.max(0, legSwing), 7, 3);
+  ctx.fillRect(px + 17, py + 28 + bounce + Math.max(0, -legSwing), 7, 3);
+}
+
+function drawPlayerUp(ctx: CanvasRenderingContext2D, px: number, py: number, walkFrame: number, isMoving: boolean) {
+  const legSwing = isMoving ? (walkFrame === 1 ? 3 : walkFrame === 3 ? -3 : 0) : 0;
+  const armSwing = isMoving ? (walkFrame === 1 ? -2 : walkFrame === 3 ? 2 : 0) : 0;
+  const bounce = isMoving ? (walkFrame === 1 || walkFrame === 3 ? -1 : 0) : 0;
+
+  // Hat (back)
+  ctx.fillStyle = "#e83b3b";
+  ctx.fillRect(px + 5, py - 2 + bounce, 22, 5);
+  // Hat back strap
+  ctx.fillStyle = "#c62d2d";
+  ctx.fillRect(px + 12, py + 2 + bounce, 8, 2);
+
+  // Hair (back of head - more visible)
+  ctx.fillStyle = "#2d3436";
+  ctx.fillRect(px + 7, py + 1 + bounce, 18, 14);
+
+  // Ears
+  ctx.fillStyle = "#f4d7a7";
+  ctx.fillRect(px + 6, py + 7 + bounce, 2, 4);
+  ctx.fillRect(px + 24, py + 7 + bounce, 2, 4);
+
+  // Body (red shirt back)
+  ctx.fillStyle = "#e83b3b";
+  ctx.fillRect(px + 8, py + 15 + bounce, 16, 8);
+  // Backpack strap detail
+  ctx.fillStyle = "#c62d2d";
+  ctx.fillRect(px + 10, py + 15 + bounce, 2, 8);
+  ctx.fillRect(px + 20, py + 15 + bounce, 2, 8);
+
+  // Arms
+  ctx.fillStyle = "#e83b3b";
+  ctx.fillRect(px + 4, py + 16 + bounce + armSwing, 4, 6);
+  ctx.fillRect(px + 24, py + 16 + bounce - armSwing, 4, 6);
+  ctx.fillStyle = "#f4d7a7";
+  ctx.fillRect(px + 4, py + 22 + bounce + armSwing, 4, 2);
+  ctx.fillRect(px + 24, py + 22 + bounce - armSwing, 4, 2);
+
+  // Legs
+  ctx.fillStyle = "#3f3f74";
+  ctx.fillRect(px + 9, py + 23 + bounce, 6, 6 + legSwing);
+  ctx.fillRect(px + 17, py + 23 + bounce, 6, 6 - legSwing);
+
+  // Shoes
+  ctx.fillStyle = "#1a1c2c";
+  ctx.fillRect(px + 8, py + 28 + bounce + Math.max(0, legSwing), 7, 3);
+  ctx.fillRect(px + 17, py + 28 + bounce + Math.max(0, -legSwing), 7, 3);
+}
+
+function drawPlayerLeft(ctx: CanvasRenderingContext2D, px: number, py: number, walkFrame: number, isMoving: boolean) {
+  const legSwing = isMoving ? (walkFrame === 1 ? 3 : walkFrame === 3 ? -3 : 0) : 0;
+  const armSwing = isMoving ? (walkFrame === 1 ? 3 : walkFrame === 3 ? -3 : 0) : 0;
+  const bounce = isMoving ? (walkFrame === 1 || walkFrame === 3 ? -1 : 0) : 0;
+
+  // Hat (side view - brim sticks out left)
+  ctx.fillStyle = "#e83b3b";
+  ctx.fillRect(px + 2, py - 2 + bounce, 20, 5);
+  ctx.fillStyle = "#f4f4f4";
+  ctx.fillRect(px + 2, py + 2 + bounce, 10, 2);
+
+  // Hair
+  ctx.fillStyle = "#2d3436";
+  ctx.fillRect(px + 8, py + 1 + bounce, 14, 5);
+  ctx.fillRect(px + 7, py + 3 + bounce, 2, 6);
 
   // Head
-  ctx.fillStyle = "#f4d7a7"; // Skin
-  ctx.fillRect(px + 9, py + 2, 14, 12);
+  ctx.fillStyle = "#f4d7a7";
+  ctx.fillRect(px + 9, py + 3 + bounce, 13, 12);
 
-  // Hair (black, spiky)
-  ctx.fillStyle = "#2d3436";
-  ctx.fillRect(px + 8, py, 16, 6);
-  ctx.fillRect(px + 7, py + 1, 2, 4);
-  ctx.fillRect(px + 23, py + 1, 2, 4);
-
-  // Hat (red cap like Pokemon trainer)
-  ctx.fillStyle = "#e83b3b";
-  ctx.fillRect(px + 6, py - 2, 20, 5);
-  ctx.fillStyle = "#f4f4f4";
-  ctx.fillRect(px + 6, py + 2, 20, 2);
-
-  // Eyes based on direction
+  // Eye (one visible, looking left)
   ctx.fillStyle = "#1a1c2c";
-  if (direction === 0) {
-    // Down
-    ctx.fillRect(px + 12, py + 7, 3, 3);
-    ctx.fillRect(px + 18, py + 7, 3, 3);
-  } else if (direction === 1) {
-    // Up - show back of head
-    ctx.fillStyle = "#2d3436";
-    ctx.fillRect(px + 9, py + 4, 14, 8);
-  } else if (direction === 2) {
-    // Left
-    ctx.fillRect(px + 10, py + 7, 3, 3);
-    ctx.fillRect(px + 16, py + 7, 3, 3);
-  } else {
-    // Right
-    ctx.fillRect(px + 14, py + 7, 3, 3);
-    ctx.fillRect(px + 20, py + 7, 3, 3);
-  }
+  ctx.fillRect(px + 10, py + 8 + bounce, 3, 3);
+  ctx.fillStyle = "#f4f4f4";
+  ctx.fillRect(px + 10, py + 8 + bounce, 1, 1);
+
+  // Nose
+  ctx.fillStyle = "#d4b78a";
+  ctx.fillRect(px + 8, py + 10 + bounce, 2, 2);
+
+  // Body
+  ctx.fillStyle = "#e83b3b";
+  ctx.fillRect(px + 10, py + 15 + bounce, 12, 8);
+  ctx.fillStyle = "#c62d2d";
+  ctx.fillRect(px + 10, py + 15 + bounce, 3, 8);
+
+  // Front arm (swings)
+  ctx.fillStyle = "#e83b3b";
+  ctx.fillRect(px + 7, py + 16 + bounce - armSwing, 4, 6);
+  ctx.fillStyle = "#f4d7a7";
+  ctx.fillRect(px + 7, py + 22 + bounce - armSwing, 4, 2);
+
+  // Back arm (hidden mostly, opposite swing)
+  ctx.fillStyle = "#c62d2d";
+  ctx.fillRect(px + 21, py + 16 + bounce + armSwing, 3, 5);
+
+  // Legs (side view, one in front of other)
+  ctx.fillStyle = "#3f3f74";
+  // Front leg
+  ctx.fillRect(px + 10 - legSwing, py + 23 + bounce, 5, 6);
+  // Back leg
+  ctx.fillStyle = "#2d2d5c";
+  ctx.fillRect(px + 17 + legSwing, py + 23 + bounce, 5, 6);
+
+  // Shoes
+  ctx.fillStyle = "#1a1c2c";
+  ctx.fillRect(px + 8 - legSwing, py + 28 + bounce, 7, 3);
+  ctx.fillStyle = "#0d0d1a";
+  ctx.fillRect(px + 16 + legSwing, py + 28 + bounce, 6, 3);
+}
+
+function drawPlayerRight(ctx: CanvasRenderingContext2D, px: number, py: number, walkFrame: number, isMoving: boolean) {
+  const legSwing = isMoving ? (walkFrame === 1 ? 3 : walkFrame === 3 ? -3 : 0) : 0;
+  const armSwing = isMoving ? (walkFrame === 1 ? 3 : walkFrame === 3 ? -3 : 0) : 0;
+  const bounce = isMoving ? (walkFrame === 1 || walkFrame === 3 ? -1 : 0) : 0;
+
+  // Hat (side view - brim sticks out right)
+  ctx.fillStyle = "#e83b3b";
+  ctx.fillRect(px + 10, py - 2 + bounce, 20, 5);
+  ctx.fillStyle = "#f4f4f4";
+  ctx.fillRect(px + 20, py + 2 + bounce, 10, 2);
+
+  // Hair
+  ctx.fillStyle = "#2d3436";
+  ctx.fillRect(px + 10, py + 1 + bounce, 14, 5);
+  ctx.fillRect(px + 23, py + 3 + bounce, 2, 6);
+
+  // Head
+  ctx.fillStyle = "#f4d7a7";
+  ctx.fillRect(px + 10, py + 3 + bounce, 13, 12);
+
+  // Eye (one visible, looking right)
+  ctx.fillStyle = "#1a1c2c";
+  ctx.fillRect(px + 19, py + 8 + bounce, 3, 3);
+  ctx.fillStyle = "#f4f4f4";
+  ctx.fillRect(px + 21, py + 8 + bounce, 1, 1);
+
+  // Nose
+  ctx.fillStyle = "#d4b78a";
+  ctx.fillRect(px + 22, py + 10 + bounce, 2, 2);
+
+  // Body
+  ctx.fillStyle = "#e83b3b";
+  ctx.fillRect(px + 10, py + 15 + bounce, 12, 8);
+  ctx.fillStyle = "#c62d2d";
+  ctx.fillRect(px + 19, py + 15 + bounce, 3, 8);
+
+  // Front arm (swings)
+  ctx.fillStyle = "#e83b3b";
+  ctx.fillRect(px + 21, py + 16 + bounce - armSwing, 4, 6);
+  ctx.fillStyle = "#f4d7a7";
+  ctx.fillRect(px + 21, py + 22 + bounce - armSwing, 4, 2);
+
+  // Back arm
+  ctx.fillStyle = "#c62d2d";
+  ctx.fillRect(px + 8, py + 16 + bounce + armSwing, 3, 5);
+
+  // Legs
+  ctx.fillStyle = "#3f3f74";
+  ctx.fillRect(px + 17 + legSwing, py + 23 + bounce, 5, 6);
+  ctx.fillStyle = "#2d2d5c";
+  ctx.fillRect(px + 10 - legSwing, py + 23 + bounce, 5, 6);
+
+  // Shoes
+  ctx.fillStyle = "#1a1c2c";
+  ctx.fillRect(px + 17 + legSwing, py + 28 + bounce, 7, 3);
+  ctx.fillStyle = "#0d0d1a";
+  ctx.fillRect(px + 10 - legSwing, py + 28 + bounce, 6, 3);
 }
 
 // Draw an NPC
@@ -293,7 +494,6 @@ export function drawNPC(
   ctx.ellipse(px + s / 2, py + s - 2, 7, 3, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Idle bob
   const bob = Math.sin(frame * 0.05) * 1.5;
 
   // Body
@@ -308,22 +508,47 @@ export function drawNPC(
   ctx.fillStyle = npc.color;
   ctx.fillRect(px + 9, py + bob, 14, 5);
 
-  // Eyes
-  ctx.fillStyle = "#1a1c2c";
-  ctx.fillRect(px + 12, py + 7 + bob, 2, 2);
-  ctx.fillRect(px + 18, py + 7 + bob, 2, 2);
+  // Eyes (blink occasionally)
+  const blinkCycle = frame % 180;
+  if (blinkCycle < 175) {
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 12, py + 7 + bob, 2, 2);
+    ctx.fillRect(px + 18, py + 7 + bob, 2, 2);
+    // Eye highlight
+    ctx.fillStyle = "#f4f4f4";
+    ctx.fillRect(px + 12, py + 7 + bob, 1, 1);
+    ctx.fillRect(px + 18, py + 7 + bob, 1, 1);
+  } else {
+    ctx.fillStyle = "#1a1c2c";
+    ctx.fillRect(px + 12, py + 8 + bob, 2, 1);
+    ctx.fillRect(px + 18, py + 8 + bob, 2, 1);
+  }
 
   // Legs
   ctx.fillStyle = "#3f3f74";
   ctx.fillRect(px + 12, py + 22 + bob, 4, 6);
   ctx.fillRect(px + 17, py + 22 + bob, 4, 6);
 
-  // Exclamation mark if nearby
+  // Shoes
+  ctx.fillStyle = "#1a1c2c";
+  ctx.fillRect(px + 11, py + 28 + bob, 5, 2);
+  ctx.fillRect(px + 17, py + 28 + bob, 5, 2);
+
+  // Name tag above NPC
   if (isNearby) {
-    ctx.fillStyle = "#e8c170";
-    ctx.font = "bold 16px monospace";
+    // Name background
+    const nameWidth = npc.name.length * 6 + 12;
+    ctx.fillStyle = "rgba(26,28,44,0.85)";
+    ctx.fillRect(px + s / 2 - nameWidth / 2, py - 22, nameWidth, 14);
+    ctx.fillStyle = npc.color;
+    ctx.font = "bold 8px monospace";
     ctx.textAlign = "center";
-    ctx.fillText("!", px + s / 2, py - 6);
+    ctx.fillText(npc.name, px + s / 2, py - 12);
+
+    // Exclamation mark
+    ctx.fillStyle = "#e8c170";
+    ctx.font = "bold 18px monospace";
+    ctx.fillText("!", px + s / 2, py - 26);
   }
 }
 
@@ -341,8 +566,11 @@ export function drawTree(
   // Trunk
   ctx.fillStyle = "#8b5a2b";
   ctx.fillRect(px + 12, py + 16, 8, 16);
+  // Trunk highlight
+  ctx.fillStyle = "#a06c3a";
+  ctx.fillRect(px + 14, py + 16, 3, 16);
 
-  // Canopy (layered circles of green)
+  // Canopy layers
   ctx.fillStyle = "#2d6b3e";
   ctx.fillRect(px - 2, py - 4, 36, 22);
   ctx.fillStyle = "#3a8c50";
@@ -366,12 +594,10 @@ export function drawFence(
   const px = x * TILE - camX;
   const py = y * TILE - camY;
 
-  // Posts
   ctx.fillStyle = "#a0815c";
   ctx.fillRect(px + 2, py + 4, 6, 24);
   ctx.fillRect(px + 24, py + 4, 6, 24);
 
-  // Rails
   ctx.fillStyle = "#c4a76c";
   ctx.fillRect(px, py + 8, TILE, 4);
   ctx.fillRect(px, py + 18, TILE, 4);
