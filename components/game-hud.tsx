@@ -30,7 +30,7 @@ export default function GameHUD({ location }: GameHUDProps) {
             </p>
           </div>
           <a
-            href="https://github.com/ayushL2007/Portfolio"
+            href="https://ayush-uyj6.onrender.com/#home"
             target="_blank"
             rel="noopener noreferrer"
             className="pointer-events-auto pixel-border bg-card/90 px-3 py-2 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer"
